@@ -6,6 +6,7 @@ import { isSupabaseConfigured, supabase } from '../../lib/supabase'
 import type { ClassSession, Student } from '../../lib/types'
 import { formatDate, normalizeName } from '../../lib/utils'
 import { useSettings } from '../../contexts/SettingsContext'
+import { defaultHeroUrl } from '../../lib/assets'
 
 export function CheckinPage() {
   const { token } = useParams()
@@ -91,7 +92,7 @@ export function CheckinPage() {
   return (
     <main className="min-h-screen bg-[#060604]">
       <section className="relative overflow-hidden bg-[#050505] px-5 py-10 text-white">
-        <img className="absolute inset-0 h-full w-full object-cover opacity-32" src={session?.courses?.banner_url || settings.default_banner_url || '/default-hero.png'} alt="" />
+        <img className="absolute inset-0 h-full w-full object-cover opacity-32" src={session?.courses?.banner_url || settings.default_banner_url || defaultHeroUrl} alt="" />
         <div className="absolute inset-0 bg-gradient-to-br from-[#050505] via-[#050505]/84 to-[#ffc400]/36" />
         <div className="relative mx-auto max-w-xl">
           <p className="text-xs font-black uppercase tracking-[0.22em] text-[#ffc400]">{settings.platform_name}</p>

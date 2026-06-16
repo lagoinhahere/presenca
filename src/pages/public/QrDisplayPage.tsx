@@ -6,6 +6,7 @@ import { isSupabaseConfigured, supabase } from '../../lib/supabase'
 import type { ClassSession } from '../../lib/types'
 import { publicCheckinUrl, formatDate } from '../../lib/utils'
 import { useSettings } from '../../contexts/SettingsContext'
+import { defaultHeroUrl } from '../../lib/assets'
 
 export function QrDisplayPage() {
   const { token } = useParams()
@@ -29,7 +30,7 @@ export function QrDisplayPage() {
     <main className="relative grid min-h-screen place-items-center overflow-hidden bg-[#050505] p-5 text-white">
       <img
         className="absolute inset-0 h-full w-full object-cover opacity-36"
-        src={session?.courses?.banner_url || settings.default_banner_url || '/default-hero.png'}
+        src={session?.courses?.banner_url || settings.default_banner_url || defaultHeroUrl}
         alt=""
       />
       <div className="absolute inset-0 bg-gradient-to-br from-[#050505] via-[#050505]/84 to-[#ffc400]/34" />

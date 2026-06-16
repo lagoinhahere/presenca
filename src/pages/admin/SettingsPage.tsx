@@ -5,6 +5,7 @@ import { PageHeader } from '../../components/PageHeader'
 import { useSettings } from '../../contexts/SettingsContext'
 import { supabase } from '../../lib/supabase'
 import type { AppSettings } from '../../lib/types'
+import { defaultHeroUrl } from '../../lib/assets'
 
 export function SettingsPage() {
   const { settings, reloadSettings } = useSettings()
@@ -109,7 +110,7 @@ export function SettingsPage() {
 
         <aside className="card overflow-hidden">
           <div className="h-52 bg-[#050505]">
-            <img className="h-full w-full object-cover" src={form.default_banner_url || '/default-hero.png'} alt="" />
+            <img className="h-full w-full object-cover" src={form.default_banner_url || defaultHeroUrl} alt="" />
           </div>
           <div className="p-5">
             {form.logo_url && <img className="mb-4 h-14 w-14 rounded-lg object-cover" src={form.logo_url} alt="" />}

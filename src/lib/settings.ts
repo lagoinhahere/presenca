@@ -1,4 +1,5 @@
 import type { AppSettings } from './types'
+import { brandCoverUrl, brandLogoUrl } from './assets'
 
 export const fallbackSettings: AppSettings = {
   id: '00000000-0000-0000-0000-000000000001',
@@ -8,6 +9,6 @@ export const fallbackSettings: AppSettings = {
   footer_text: 'Lagoinha Americana - cuidado, ensino e comunhao.',
   primary_color: '#ffc400',
   accent_color: '#ffc400',
-  logo_url: '/brand-logo.png',
-  default_banner_url: '/brand-cover.png',
+  logo_url: brandLogoUrl,
+  default_banner_url: brandCoverUrl,
 }

@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { supabase } from '../lib/supabase'
 import { fallbackSettings } from '../lib/settings'
 import type { AppSettings } from '../lib/types'
+import { resolveAssetUrl } from '../lib/assets'
 
 type SettingsContextValue = {
   settings: AppSettings
@@ -17,7 +18,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   async function reloadSettings() {
     const { data, error } = await supabase.from('app_settings').select('*').limit(1).maybeSingle()
-    if (!error && data) setSettings({ ...fallbackSettings, ...data })
+    if (!error && data) {
+      setSettings({
+        ...fallbackSettings,
+        ...data,
+        logo_url: resolveAssetUrl(data.logo_url),
+        default_banner_url: resolveAssetUrl(data.default_banner_url),
+      })
+    }
   }
 
   useEffect(() => {

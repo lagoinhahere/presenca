@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase'
 import type { Checkin, ClassSession, Course } from '../../lib/types'
 import { formatDate, formatDateTime } from '../../lib/utils'
 import { useSettings } from '../../contexts/SettingsContext'
+import { defaultHeroUrl } from '../../lib/assets'
 
 export function DashboardPage() {
   const { settings } = useSettings()
@@ -36,7 +37,7 @@ export function DashboardPage() {
       <PageHeader title="Visao geral" eyebrow="Lagoinha Here!" />
 
       <section className="relative mb-6 overflow-hidden rounded-lg bg-[#050505] p-6 text-white md:p-8">
-        <img className="absolute inset-0 h-full w-full object-cover opacity-34" src={settings.default_banner_url ?? '/default-hero.png'} alt="" />
+        <img className="absolute inset-0 h-full w-full object-cover opacity-34" src={settings.default_banner_url ?? defaultHeroUrl} alt="" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-[#050505]/72 to-[#050505]/18" />
         <div className="relative max-w-2xl">
           <p className="text-sm font-black uppercase tracking-[0.22em] text-[#ffc400]">{settings.church_name}</p>

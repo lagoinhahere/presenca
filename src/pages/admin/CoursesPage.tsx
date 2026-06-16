@@ -8,6 +8,7 @@ import { supabase } from '../../lib/supabase'
 import type { Course, CourseStatus } from '../../lib/types'
 import { formatDate } from '../../lib/utils'
 import { useSettings } from '../../contexts/SettingsContext'
+import { brandCoverUrl, defaultHeroUrl } from '../../lib/assets'
 
 const blankCourse = {
   name: '',
@@ -70,7 +71,7 @@ export function CoursesPage() {
           {courses.map((course) => (
             <article key={course.id} className="card overflow-hidden">
               <div className="relative h-44">
-                <img className="h-full w-full object-cover" src={course.banner_url || settings.default_banner_url || '/default-hero.png'} alt="" />
+                <img className="h-full w-full object-cover" src={course.banner_url || settings.default_banner_url || defaultHeroUrl} alt="" />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/80 to-transparent" />
                 <span className="chip absolute left-4 top-4">{course.status}</span>
                 <div className="absolute bottom-4 left-4 right-4 text-white">
@@ -184,7 +185,7 @@ function CourseModal({ course, onClose, onSaved }: { course: Course | null; onCl
             <div className="relative overflow-hidden rounded-lg border border-[#ffc400]/18 bg-[#050505]">
               <img
                 className="h-56 w-full object-cover opacity-90"
-                src={form.banner_url || '/brand-cover.png'}
+                src={form.banner_url || brandCoverUrl}
                 alt="Previa do banner do curso"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/86 via-black/24 to-transparent" />

@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useSettings } from '../contexts/SettingsContext'
 import { isSupabaseConfigured } from '../lib/supabase'
 import { LogoMark } from '../components/LogoMark'
+import { defaultHeroUrl } from '../lib/assets'
 
 export function LoginPage() {
   const { signIn, user, profile } = useAuth()
@@ -32,7 +33,7 @@ export function LoginPage() {
   return (
     <main className="relative grid min-h-screen overflow-hidden bg-[#060604] lg:grid-cols-[1.05fr_0.95fr]">
       <section className="relative hidden min-h-screen lg:block">
-        <img className="absolute inset-0 h-full w-full object-cover" src={settings.default_banner_url ?? '/default-hero.png'} alt="" />
+        <img className="absolute inset-0 h-full w-full object-cover" src={settings.default_banner_url ?? defaultHeroUrl} alt="" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#050505]/76 via-[#050505]/28 to-transparent" />
         <div className="absolute inset-x-10 bottom-10 max-w-xl text-white">
           <p className="text-sm font-black uppercase tracking-[0.24em] text-[#ffc400]">{settings.church_name}</p>
