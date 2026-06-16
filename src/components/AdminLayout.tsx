@@ -36,19 +36,23 @@ export function AdminLayout() {
     <div className="min-h-screen bg-[#060604] text-[#fff8df]">
       <div className="fixed inset-y-0 left-0 z-40 hidden w-72 border-r border-[#ffc400]/15 bg-[#090907]/88 px-5 py-5 backdrop-blur-xl lg:block">
         <LogoMark />
-        <nav className="mt-10 grid gap-2">
+        <div className="mt-8 rounded-lg border border-[#ffc400]/12 bg-[#ffc400]/8 p-3">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-[#ffc400]">Controle de presenca</p>
+          <p className="mt-1 text-xs font-semibold leading-relaxed text-[#bfb490]">Cursos, aulas e check-ins organizados para a Lagoinha Americana.</p>
+        </div>
+        <nav className="mt-7 grid gap-2">
           {nav.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               className={({ isActive }) =>
                 cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-extrabold text-[#bfb490] transition hover:bg-white/6 hover:text-white',
+                  'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-extrabold text-[#bfb490] transition hover:bg-white/6 hover:text-white',
                   isActive && 'bg-[#ffc400] text-[#050505] shadow-lg shadow-[#ffc400]/16',
                 )
               }
             >
-              <item.icon size={18} />
+              <item.icon className="transition group-hover:scale-105" size={18} />
               {item.label}
             </NavLink>
           ))}
@@ -89,6 +93,7 @@ export function AdminLayout() {
       </header>
 
       <main className="min-h-screen px-4 py-6 lg:ml-72 lg:px-8 lg:py-8">
+        <div className="pointer-events-none fixed right-0 top-0 h-80 w-80 rounded-full bg-[#ffc400]/10 blur-3xl" />
         <Outlet />
       </main>
     </div>

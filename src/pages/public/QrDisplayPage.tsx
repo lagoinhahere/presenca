@@ -36,6 +36,7 @@ export function QrDisplayPage() {
       <div className="absolute inset-0 bg-gradient-to-br from-[#050505] via-[#050505]/84 to-[#ffc400]/34" />
       <section className="relative grid w-full max-w-6xl gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
         <div>
+          <div className="mb-6 h-1 w-20 rounded-full bg-[#ffc400]" />
           <p className="text-sm font-black uppercase tracking-[0.24em] text-[#ffc400]">{settings.platform_name}</p>
           <h1 className="mt-5 max-w-4xl text-5xl font-black tracking-normal md:text-7xl">{session?.name ?? 'Check-in'}</h1>
           <p className="mt-5 text-2xl font-bold text-white/82">{session?.courses?.name}</p>
@@ -45,7 +46,7 @@ export function QrDisplayPage() {
             {session?.location && <span className="chip border-white/25 bg-white/12 text-white">{session.location}</span>}
           </div>
         </div>
-        <div className="rounded-lg bg-[#fff8df] p-5 text-[#050505] shadow-2xl shadow-black/40">
+        <div className="rounded-lg border border-[#ffc400]/30 bg-[#fff8df] p-5 text-[#050505] shadow-2xl shadow-black/40">
           <QRCodeSVG value={url} size={320} includeMargin level="H" />
           <Link className="btn btn-primary mt-4 w-full" to={`/checkin/${token}`}>
             <ExternalLink size={18} /> Abrir check-in

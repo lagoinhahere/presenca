@@ -91,10 +91,11 @@ export function CheckinPage() {
 
   return (
     <main className="min-h-screen bg-[#060604]">
-      <section className="relative overflow-hidden bg-[#050505] px-5 py-10 text-white">
+      <section className="relative overflow-hidden bg-[#050505] px-5 py-12 text-white">
         <img className="absolute inset-0 h-full w-full object-cover opacity-32" src={session?.courses?.banner_url || settings.default_banner_url || defaultHeroUrl} alt="" />
         <div className="absolute inset-0 bg-gradient-to-br from-[#050505] via-[#050505]/84 to-[#ffc400]/36" />
         <div className="relative mx-auto max-w-xl">
+          <div className="mb-5 h-1 w-16 rounded-full bg-[#ffc400]" />
           <p className="text-xs font-black uppercase tracking-[0.22em] text-[#ffc400]">{settings.platform_name}</p>
           <h1 className="mt-4 text-4xl font-black tracking-normal">{session?.name ?? 'Check-in indisponivel'}</h1>
           <p className="mt-3 text-base font-semibold text-white/82">{session?.courses?.name}</p>
@@ -105,7 +106,7 @@ export function CheckinPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-xl px-5 py-6">
+      <section className="mx-auto -mt-4 max-w-xl px-5 py-6">
         {done ? (
           <div className="card p-6 text-center">
             <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-lg bg-[#ffc400]/18 text-[#ffc400]">
@@ -115,7 +116,7 @@ export function CheckinPage() {
             <p className="mt-2 font-medium text-[#bfb490]">Obrigado! Seu check-in foi registrado com sucesso.</p>
           </div>
         ) : (
-          <form className="card grid gap-4 p-5" onSubmit={submit}>
+          <form className="card grid gap-4 p-5 shadow-2xl shadow-black/40" onSubmit={submit}>
             <div>
               <div className="mb-4 grid h-12 w-12 place-items-center rounded-lg bg-[#ffc400]/18 text-[#ffc400]">
                 <UserCheck size={24} />
@@ -139,7 +140,7 @@ export function CheckinPage() {
               Observacao
               <textarea className="field min-h-20" value={form.note} onChange={(event) => update('note', event.target.value)} />
             </label>
-            <button className="btn btn-primary" disabled={busy || !session} type="submit">
+            <button className="btn btn-primary mt-1" disabled={busy || !session} type="submit">
               {busy ? <Loader2 className="animate-spin" size={18} /> : <UserCheck size={18} />}
               Confirmar presenca
             </button>

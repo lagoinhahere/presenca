@@ -34,15 +34,27 @@ export function LoginPage() {
     <main className="relative grid min-h-screen overflow-hidden bg-[#060604] lg:grid-cols-[1.05fr_0.95fr]">
       <section className="relative hidden min-h-screen lg:block">
         <img className="absolute inset-0 h-full w-full object-cover" src={settings.default_banner_url ?? defaultHeroUrl} alt="" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#050505]/76 via-[#050505]/28 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#050505]/84 via-[#050505]/34 to-transparent" />
+        <div className="absolute left-10 top-10 rounded-full border border-[#ffc400]/24 bg-black/26 px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-[#ffc400] backdrop-blur">
+          Lagoinha Americana
+        </div>
         <div className="absolute inset-x-10 bottom-10 max-w-xl text-white">
           <p className="text-sm font-black uppercase tracking-[0.24em] text-[#ffc400]">{settings.church_name}</p>
-          <h1 className="mt-4 text-5xl font-black tracking-normal">{settings.platform_name}</h1>
+          <h1 className="mt-4 text-6xl font-black tracking-normal">{settings.platform_name}</h1>
           <p className="mt-4 text-lg font-medium text-white/84">{settings.welcome_text}</p>
+          <div className="mt-8 grid max-w-lg grid-cols-3 gap-3">
+            {['Cursos', 'Aulas', 'Check-ins'].map((item) => (
+              <div key={item} className="rounded-lg border border-white/12 bg-black/24 p-3 backdrop-blur">
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-[#ffc400]">{item}</p>
+                <p className="mt-1 text-xs font-semibold text-white/70">ao vivo</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      <section className="grid place-items-center px-5 py-10">
+      <section className="relative grid place-items-center px-5 py-10">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_18%,rgba(255,196,0,0.14),transparent_24rem)]" />
         <div className="w-full max-w-md">
           <LogoMark />
           <div className="glass mt-8 rounded-lg p-6">

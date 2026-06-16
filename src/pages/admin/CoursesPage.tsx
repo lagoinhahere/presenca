@@ -69,11 +69,12 @@ export function CoursesPage() {
       ) : (
         <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
           {courses.map((course) => (
-            <article key={course.id} className="card overflow-hidden">
-              <div className="relative h-44">
+            <article key={course.id} className="card overflow-hidden transition hover:-translate-y-0.5 hover:border-[#ffc400]/28">
+              <div className="relative h-48">
                 <img className="h-full w-full object-cover" src={course.banner_url || settings.default_banner_url || defaultHeroUrl} alt="" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/80 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/92 via-[#050505]/18 to-transparent" />
                 <span className="chip absolute left-4 top-4">{course.status}</span>
+                <span className="absolute right-4 top-4 h-3 w-3 rounded-full border border-white/40" style={{ background: course.color }} />
                 <div className="absolute bottom-4 left-4 right-4 text-white">
                   <h2 className="line-clamp-2 text-2xl font-black">{course.name}</h2>
                   <p className="mt-1 text-sm font-semibold text-white/82">{course.owner_name || 'Responsavel nao informado'}</p>
@@ -87,7 +88,7 @@ export function CoursesPage() {
                   </span>
                   {course.location && <span className="chip">{course.location}</span>}
                 </div>
-                <div className="mt-5 flex flex-wrap gap-2">
+                <div className="mt-5 flex flex-wrap gap-2 border-t border-[#ffc400]/10 pt-4">
                   <button className="btn btn-soft" onClick={() => setEditing(course)} type="button">
                     <Pencil size={16} /> Editar
                   </button>

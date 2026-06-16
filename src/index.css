@@ -23,7 +23,21 @@ body {
   margin: 0;
   background:
     radial-gradient(circle at top left, rgba(255, 196, 0, 0.18), transparent 34rem),
+    radial-gradient(circle at 82% 12%, rgba(255, 255, 255, 0.08), transparent 22rem),
     linear-gradient(135deg, #050505 0%, #10100b 42%, #070706 100%);
+}
+
+body::before {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  content: "";
+  background-image:
+    linear-gradient(rgba(255, 196, 0, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 196, 0, 0.035) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: radial-gradient(circle at top, black, transparent 72%);
 }
 
 button,
@@ -42,6 +56,13 @@ button {
   background: rgba(17, 16, 12, 0.82);
   box-shadow: 0 26px 90px rgba(0, 0, 0, 0.42);
   backdrop-filter: blur(24px);
+}
+
+.gold-text {
+  background: linear-gradient(135deg, #fff5c2, #ffc400 48%, #9f7800);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .field {
@@ -93,6 +114,12 @@ button {
   transform: translateY(-1px);
 }
 
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+  transform: none;
+}
+
 .btn-primary {
   background: linear-gradient(135deg, #ffd84d, #ffc400 48%, #b58b00);
   color: #080806;
@@ -103,6 +130,11 @@ button {
   border-color: rgba(255, 196, 0, 0.18);
   background: rgba(255, 255, 255, 0.06);
   color: #fff8df;
+}
+
+.btn-soft:hover {
+  border-color: rgba(255, 196, 0, 0.36);
+  background: rgba(255, 196, 0, 0.1);
 }
 
 .btn-danger {
@@ -124,10 +156,20 @@ button {
 }
 
 .card {
+  position: relative;
+  overflow: hidden;
   border-radius: 8px;
   border: 1px solid rgba(255, 196, 0, 0.12);
   background: linear-gradient(180deg, rgba(24, 23, 18, 0.92), rgba(13, 13, 11, 0.9));
   box-shadow: 0 20px 70px rgba(0, 0, 0, 0.34);
+}
+
+.card::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  content: "";
+  background: linear-gradient(90deg, transparent, rgba(255, 196, 0, 0.42), transparent);
 }
 
 .premium-panel {
