@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { ImagePlus, Save } from 'lucide-react'
+import { ImagePlus, Loader2, Save, UploadCloud } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '../../components/PageHeader'
 import { useSettings } from '../../contexts/SettingsContext'
@@ -11,19 +11,37 @@ export function SettingsPage() {
   const { settings, reloadSettings } = useSettings()
   const [form, setForm] = useState<AppSettings>(settings)
   const [uploading, setUploading] = useState<string | null>(null)
+  const [lastUpload, setLastUpload] = useState<string | null>(null)
 
   function update(key: keyof AppSettings, value: string) {
     setForm((current) => ({ ...current, [key]: value }))
   }
 
   async function upload(file: File, field: 'logo_url' | 'default_banner_url') {
+    if (!file.type.startsWith('image/')) {
+      toast.error('Escolha um arquivo de imagem.')
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('A imagem precisa ter ate 5 MB.')
+      return
+    }
     setUploading(field)
-    const path = `${field === 'logo_url' ? 'logos' : 'banners'}/${crypto.randomUUID()}-${file.name}`
-    const { error } = await supabase.storage.from('media').upload(path, file)
-    if (error) toast.error(error.message)
+    setLastUpload(null)
+    const safeName = file.name.toLowerCase().replace(/[^a-z0-9._-]+/g, '-')
+    const path = `${field === 'logo_url' ? 'logos' : 'banners'}/${crypto.randomUUID()}-${safeName}`
+    const { error } = await supabase.storage.from('media').upload(path, file, {
+      cacheControl: '3600',
+      upsert: false,
+    })
+    if (error) {
+      toast.error(`Upload nao realizado: ${error.message}`)
+    }
     else {
       const { data } = supabase.storage.from('media').getPublicUrl(path)
       update(field, data.publicUrl)
+      setLastUpload(field)
+      toast.success(`${field === 'logo_url' ? 'Logo' : 'Imagem padrao'} enviada. Clique em Salvar configuracoes.`)
     }
     setUploading(null)
   }
@@ -87,20 +105,23 @@ export function SettingsPage() {
               URL da imagem padrao
               <input className="field" value={form.default_banner_url ?? ''} onChange={(event) => update('default_banner_url', event.target.value)} />
             </label>
-            <div className="flex flex-wrap gap-2 md:col-span-2">
-              <span className="btn btn-soft">
-                <ImagePlus size={16} /> {uploading === 'logo_url' ? 'Enviando logo...' : 'Upload logo'}
-                <input className="hidden" type="file" accept="image/*" onChange={(event) => event.target.files?.[0] && upload(event.target.files[0], 'logo_url')} />
-              </span>
-              <span className="btn btn-soft">
-                <ImagePlus size={16} /> {uploading === 'default_banner_url' ? 'Enviando imagem...' : 'Upload imagem'}
-                <input
-                  className="hidden"
-                  type="file"
-                  accept="image/*"
-                  onChange={(event) => event.target.files?.[0] && upload(event.target.files[0], 'default_banner_url')}
-                />
-              </span>
+            <div className="grid gap-3 md:col-span-2 md:grid-cols-2">
+              <UploadTile
+                title="Logo da plataforma"
+                description="Clique para escolher PNG, JPG ou WEBP ate 5 MB."
+                currentUrl={form.logo_url}
+                busy={uploading === 'logo_url'}
+                changed={lastUpload === 'logo_url'}
+                onPick={(file) => upload(file, 'logo_url')}
+              />
+              <UploadTile
+                title="Imagem padrao"
+                description="Use uma capa horizontal. Recomendado: 1600x900."
+                currentUrl={form.default_banner_url}
+                busy={uploading === 'default_banner_url'}
+                changed={lastUpload === 'default_banner_url'}
+                onPick={(file) => upload(file, 'default_banner_url')}
+              />
             </div>
           </div>
           <button className="btn btn-primary w-fit" type="submit">
@@ -123,5 +144,56 @@ export function SettingsPage() {
         </aside>
       </form>
     </div>
+  )
+}
+
+function UploadTile({
+  title,
+  description,
+  currentUrl,
+  busy,
+  changed,
+  onPick,
+}: {
+  title: string
+  description: string
+  currentUrl: string | null
+  busy: boolean
+  changed: boolean
+  onPick: (file: File) => void
+}) {
+  return (
+    <label className="group relative grid cursor-pointer gap-3 rounded-lg border border-dashed border-[#ffc400]/28 bg-[#ffc400]/8 p-4 transition hover:border-[#ffc400]/70 hover:bg-[#ffc400]/12">
+      <input
+        className="absolute inset-0 cursor-pointer opacity-0"
+        type="file"
+        accept="image/*"
+        disabled={busy}
+        onChange={(event) => {
+          const file = event.target.files?.[0]
+          if (file) onPick(file)
+          event.currentTarget.value = ''
+        }}
+      />
+      <div className="flex items-start gap-3">
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-[#ffc400]/18 text-[#ffc400]">
+          {busy ? <Loader2 className="animate-spin" size={22} /> : <UploadCloud size={22} />}
+        </span>
+        <div className="min-w-0">
+          <p className="font-black text-[#fff8df]">{title}</p>
+          <p className="mt-1 text-xs font-semibold leading-relaxed text-[#bfb490]">{busy ? 'Enviando para o Supabase Storage...' : description}</p>
+          {changed && <p className="mt-2 text-xs font-black uppercase tracking-[0.14em] text-[#ffc400]">Enviado. Salve para aplicar.</p>}
+        </div>
+      </div>
+      <div className="relative h-24 overflow-hidden rounded-lg border border-[#ffc400]/12 bg-black/40">
+        {currentUrl ? (
+          <img className="h-full w-full object-cover transition group-hover:scale-[1.02]" src={currentUrl} alt="" />
+        ) : (
+          <div className="grid h-full place-items-center text-[#8f8260]">
+            <ImagePlus size={24} />
+          </div>
+        )}
+      </div>
+    </label>
   )
 }
