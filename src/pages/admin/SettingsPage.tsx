@@ -5,7 +5,7 @@ import { PageHeader } from '../../components/PageHeader'
 import { useSettings } from '../../contexts/SettingsContext'
 import { supabase } from '../../lib/supabase'
 import type { AppSettings } from '../../lib/types'
-import { defaultHeroUrl } from '../../lib/assets'
+import { defaultHeroUrl, resolveAssetUrl, storageAssetPath } from '../../lib/assets'
 
 export function SettingsPage() {
   const { settings, reloadSettings } = useSettings()
@@ -60,8 +60,8 @@ export function SettingsPage() {
       footer_text: form.footer_text,
       primary_color: form.primary_color,
       accent_color: form.accent_color,
-      logo_url: form.logo_url || null,
-      default_banner_url: form.default_banner_url || null,
+      logo_url: storageAssetPath(form.logo_url),
+      default_banner_url: storageAssetPath(form.default_banner_url),
     }
     const { error } = await supabase.from('app_settings').upsert(payload)
     if (error) toast.error(error.message)
@@ -113,7 +113,7 @@ export function SettingsPage() {
               <UploadTile
                 title="Logo da plataforma"
                 description="Clique para escolher PNG, JPG ou WEBP ate 5 MB."
-                currentUrl={form.logo_url}
+                currentUrl={resolveAssetUrl(form.logo_url)}
                 busy={uploading === 'logo_url'}
                 changed={lastUpload === 'logo_url'}
                 onPick={(file) => upload(file, 'logo_url')}
@@ -121,7 +121,7 @@ export function SettingsPage() {
               <UploadTile
                 title="Imagem padrao"
                 description="Use uma capa horizontal. Recomendado: 1600x900."
-                currentUrl={form.default_banner_url}
+                currentUrl={resolveAssetUrl(form.default_banner_url)}
                 busy={uploading === 'default_banner_url'}
                 changed={lastUpload === 'default_banner_url'}
                 onPick={(file) => upload(file, 'default_banner_url')}
@@ -135,10 +135,10 @@ export function SettingsPage() {
 
         <aside className="card overflow-hidden">
           <div className="h-52 bg-[#050505]">
-            <img className="h-full w-full object-cover" src={form.default_banner_url || defaultHeroUrl} alt="" />
+            <img className="h-full w-full object-cover" src={resolveAssetUrl(form.default_banner_url) || defaultHeroUrl} alt="" />
           </div>
           <div className="p-5">
-            {form.logo_url && <img className="mb-4 h-14 w-14 rounded-lg object-cover" src={form.logo_url} alt="" />}
+            {form.logo_url && <img className="mb-4 h-14 w-14 rounded-lg object-cover" src={resolveAssetUrl(form.logo_url) ?? ''} alt="" />}
             <p className="text-xs font-black uppercase tracking-[0.2em]" style={{ color: form.primary_color }}>
               {form.church_name}
             </p>
