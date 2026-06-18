@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Archive, LinkIcon, Loader2, Pencil, Plus, Trash2, UploadCloud, X } from 'lucide-react'
+import { Archive, CalendarDays, LinkIcon, Loader2, Pencil, Plus, Trash2, UploadCloud, X } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { EmptyState } from '../../components/EmptyState'
 import { Modal } from '../../components/Modal'
@@ -24,6 +25,7 @@ const blankCourse = {
 
 export function CoursesPage() {
   const { settings } = useSettings()
+  const navigate = useNavigate()
   const [courses, setCourses] = useState<Course[]>([])
   const [editing, setEditing] = useState<Course | null>(null)
   const [creating, setCreating] = useState(false)
@@ -70,16 +72,24 @@ export function CoursesPage() {
         <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
           {courses.map((course) => (
             <article key={course.id} className="card overflow-hidden transition hover:-translate-y-0.5 hover:border-[#ffc400]/28">
-              <div className="relative h-48">
+              <button
+                className="group relative block h-48 w-full cursor-pointer overflow-hidden text-left"
+                onClick={() => navigate(`/sessions?course=${course.id}`)}
+                type="button"
+                aria-label={`Abrir aulas de ${course.name}`}
+              >
                 <img className="h-full w-full object-cover" src={course.banner_url || settings.default_banner_url || defaultHeroUrl} alt="" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/92 via-[#050505]/18 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/92 via-[#050505]/18 to-transparent transition group-hover:from-[#050505]/82" />
                 <span className="chip absolute left-4 top-4">{course.status}</span>
                 <span className="absolute right-4 top-4 h-3 w-3 rounded-full border border-white/40" style={{ background: course.color }} />
-                <div className="absolute bottom-4 left-4 right-4 text-white">
+                <span className="absolute right-4 bottom-4 hidden items-center gap-2 rounded-lg border border-[#ffc400]/24 bg-black/58 px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-[#ffc400] backdrop-blur sm:flex">
+                  <CalendarDays size={15} /> Ver aulas
+                </span>
+                <div className="absolute bottom-4 left-4 right-4 text-white sm:right-36">
                   <h2 className="line-clamp-2 text-2xl font-black">{course.name}</h2>
                   <p className="mt-1 text-sm font-semibold text-white/82">{course.owner_name || 'Responsavel nao informado'}</p>
                 </div>
-              </div>
+              </button>
               <div className="p-4">
                 <p className="line-clamp-2 min-h-10 text-sm font-medium text-[#bfb490]">{course.description}</p>
                 <div className="mt-4 flex flex-wrap gap-2">

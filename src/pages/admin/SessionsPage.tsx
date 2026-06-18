@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Archive, Copy, Eye, Pencil, Plus, QrCode, Trash2 } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { EmptyState } from '../../components/EmptyState'
 import { Modal } from '../../components/Modal'
@@ -20,10 +20,12 @@ const blankSession = {
 }
 
 export function SessionsPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [sessions, setSessions] = useState<ClassSession[]>([])
   const [courses, setCourses] = useState<Course[]>([])
   const [editing, setEditing] = useState<ClassSession | null>(null)
   const [creating, setCreating] = useState(false)
+  const selectedCourseId = searchParams.get('course')
 
   async function load() {
     const [sessionResult, courseResult] = await Promise.all([
@@ -37,6 +39,9 @@ export function SessionsPage() {
   useEffect(() => {
     load()
   }, [])
+
+  const selectedCourse = courses.find((course) => course.id === selectedCourseId)
+  const visibleSessions = selectedCourseId ? sessions.filter((session) => session.course_id === selectedCourseId) : sessions
 
   async function remove(session: ClassSession) {
     if (!confirm(`Excluir "${session.name}"?`)) return
@@ -70,11 +75,23 @@ export function SessionsPage() {
         </button>
       </PageHeader>
 
-      {sessions.length === 0 ? (
+      {selectedCourse && (
+        <section className="card mb-5 flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-[#ffc400]">Aulas filtradas por curso</p>
+            <h2 className="mt-1 line-clamp-2 text-xl font-black text-[#fff8df]">{selectedCourse.name}</h2>
+          </div>
+          <button className="btn btn-soft" onClick={() => setSearchParams({})} type="button">
+            Ver todas
+          </button>
+        </section>
+      )}
+
+      {visibleSessions.length === 0 ? (
         <EmptyState title="Nenhuma aula criada" text="Crie aulas dentro de um curso para gerar QR Codes e receber check-ins." />
       ) : (
         <div className="grid gap-4">
-          {sessions.map((session) => (
+          {visibleSessions.map((session) => (
             <article key={session.id} className="card grid gap-4 p-4 lg:grid-cols-[1fr_auto] lg:items-center">
               <div className="min-w-0">
                 <div className="mb-2 flex flex-wrap gap-2">
@@ -119,6 +136,7 @@ export function SessionsPage() {
         <SessionModal
           session={editing}
           courses={courses}
+          defaultCourseId={selectedCourse?.id ?? null}
           onClose={() => {
             setCreating(false)
             setEditing(null)
@@ -137,16 +155,25 @@ export function SessionsPage() {
 function SessionModal({
   session,
   courses,
+  defaultCourseId,
   onClose,
   onSaved,
 }: {
   session: ClassSession | null
   courses: Course[]
+  defaultCourseId: string | null
   onClose: () => void
   onSaved: () => void
 }) {
-  const initial = useMemo(() => ({ ...blankSession, course_id: courses[0]?.id ?? '', ...(session ?? {}) }), [courses, session])
+  const initial = useMemo(
+    () => ({ ...blankSession, course_id: defaultCourseId ?? courses[0]?.id ?? '', ...(session ?? {}) }),
+    [courses, defaultCourseId, session],
+  )
   const [form, setForm] = useState(initial)
+
+  useEffect(() => {
+    setForm(initial)
+  }, [initial])
 
   function update(key: keyof typeof blankSession, value: string) {
     setForm((current) => ({ ...current, [key]: value }))

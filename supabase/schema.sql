@@ -170,6 +170,20 @@ as $$
   );
 $$;
 
+create or replace function public.get_class_checkin_count(target_qr_token text)
+returns integer
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select count(*)::integer
+  from public.checkins ci
+  join public.class_sessions cs on cs.id = ci.class_id
+  where cs.qr_token::text = target_qr_token
+    and cs.status <> 'archived';
+$$;
+
 alter table public.profiles enable row level security;
 alter table public.app_settings enable row level security;
 alter table public.courses enable row level security;
@@ -221,6 +235,8 @@ create policy "Public can create checkins" on public.checkins for insert with ch
 
 drop policy if exists "Admins can manage checkins" on public.checkins;
 create policy "Admins can manage checkins" on public.checkins for all using (public.is_admin()) with check (public.is_admin());
+
+grant execute on function public.get_class_checkin_count(text) to anon, authenticated;
 
 insert into storage.buckets (id, name, public)
 values ('media', 'media', true)
