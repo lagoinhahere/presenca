@@ -92,10 +92,28 @@ export function AdminLayout() {
         )}
       </header>
 
-      <main className="min-h-screen px-4 py-6 lg:ml-72 lg:px-8 lg:py-8">
+      <main className="min-h-screen px-4 pb-28 pt-6 lg:ml-72 lg:px-8 lg:py-8">
         <div className="pointer-events-none fixed right-0 top-0 h-80 w-80 rounded-full bg-[#ffc400]/10 blur-3xl" />
         <Outlet />
       </main>
+
+      <nav className="fixed inset-x-3 bottom-3 z-40 grid grid-cols-5 rounded-lg border border-[#ffc400]/18 bg-[#090907]/92 p-1.5 shadow-2xl shadow-black/60 backdrop-blur-xl lg:hidden">
+        {nav.map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            className={({ isActive }) =>
+              cn(
+                'grid min-h-14 place-items-center gap-1 rounded-lg px-1 text-[0.66rem] font-black text-[#bfb490] transition',
+                isActive && 'bg-[#ffc400] text-[#050505] shadow-lg shadow-[#ffc400]/18',
+              )
+            }
+          >
+            <item.icon size={18} />
+            <span className="max-w-full truncate">{item.label}</span>
+          </NavLink>
+        ))}
+      </nav>
     </div>
   )
 }

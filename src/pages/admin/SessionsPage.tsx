@@ -81,13 +81,13 @@ export function SessionsPage() {
                   <span className="chip">{session.courses?.name ?? 'Curso removido'}</span>
                   <span className="chip">{session.status}</span>
                 </div>
-                <h2 className="truncate text-2xl font-black">{session.name}</h2>
+                <h2 className="line-clamp-2 text-xl font-black sm:text-2xl lg:truncate">{session.name}</h2>
                 <p className="mt-1 text-sm font-semibold text-[#bfb490]">
                   {formatDate(session.session_date)} {session.starts_at ? `as ${session.starts_at}` : ''} {session.location ? `- ${session.location}` : ''}
                 </p>
                 {session.description && <p className="mt-2 line-clamp-2 text-sm font-medium text-[#bfb490]">{session.description}</p>}
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap lg:justify-end">
                 <Link className="btn btn-primary" to={`/qr/${session.qr_token}`} target="_blank">
                   <QrCode size={16} /> QR
                 </Link>
@@ -97,14 +97,17 @@ export function SessionsPage() {
                 <button className="btn btn-soft" onClick={() => copyUrl(publicCheckinUrl(session.qr_token))} type="button">
                   <Copy size={16} /> Link
                 </button>
-                <button className="btn btn-soft" onClick={() => setEditing(session)} type="button">
+                <button className="btn btn-soft" onClick={() => setEditing(session)} type="button" aria-label="Editar aula">
                   <Pencil size={16} />
+                  <span className="sm:hidden">Editar</span>
                 </button>
-                <button className="btn btn-soft" onClick={() => archive(session)} type="button">
+                <button className="btn btn-soft" onClick={() => archive(session)} type="button" aria-label="Arquivar aula">
                   <Archive size={16} />
+                  <span className="sm:hidden">Arquivar</span>
                 </button>
-                <button className="btn btn-danger" onClick={() => remove(session)} type="button">
+                <button className="btn btn-danger col-span-2 sm:col-span-1" onClick={() => remove(session)} type="button" aria-label="Excluir aula">
                   <Trash2 size={16} />
+                  <span className="sm:hidden">Excluir</span>
                 </button>
               </div>
             </article>
@@ -216,7 +219,7 @@ function SessionModal({
           </label>
         </div>
         {session?.qr_token && <p className="text-xs font-bold text-[#bfb490]">QR publico: {publicQrUrl(session.qr_token)}</p>}
-        <div className="flex justify-end gap-2">
+        <div className="grid gap-2 sm:flex sm:justify-end">
           <button className="btn btn-soft" onClick={onClose} type="button">
             Cancelar
           </button>

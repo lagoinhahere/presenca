@@ -88,14 +88,14 @@ export function CoursesPage() {
                   </span>
                   {course.location && <span className="chip">{course.location}</span>}
                 </div>
-                <div className="mt-5 flex flex-wrap gap-2 border-t border-[#ffc400]/10 pt-4">
+                <div className="mt-5 grid grid-cols-2 gap-2 border-t border-[#ffc400]/10 pt-4 sm:flex sm:flex-wrap">
                   <button className="btn btn-soft" onClick={() => setEditing(course)} type="button">
                     <Pencil size={16} /> Editar
                   </button>
                   <button className="btn btn-soft" onClick={() => archiveCourse(course)} type="button">
                     <Archive size={16} /> Arquivar
                   </button>
-                  <button className="btn btn-danger" onClick={() => removeCourse(course)} type="button">
+                  <button className="btn btn-danger col-span-2 sm:col-span-1" onClick={() => removeCourse(course)} type="button">
                     <Trash2 size={16} /> Excluir
                   </button>
                 </div>
@@ -268,7 +268,7 @@ function CourseModal({ course, onClose, onSaved }: { course: Course | null; onCl
             <textarea className="field min-h-20" value={form.notes ?? ''} onChange={(event) => update('notes', event.target.value)} />
           </label>
         </div>
-        <div className="flex justify-end gap-2">
+        <div className="grid gap-2 sm:flex sm:justify-end">
           <button className="btn btn-soft" onClick={onClose} type="button">
             Cancelar
           </button>

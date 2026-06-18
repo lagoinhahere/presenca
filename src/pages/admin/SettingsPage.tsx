@@ -124,7 +124,7 @@ export function SettingsPage() {
               />
             </div>
           </div>
-          <button className="btn btn-primary w-fit" type="submit">
+          <button className="btn btn-primary sm:w-fit" type="submit">
             <Save size={18} /> Salvar configuracoes
           </button>
         </section>

@@ -36,15 +36,15 @@ export function DashboardPage() {
     <div>
       <PageHeader title="Visao geral" eyebrow="Lagoinha Here!" />
 
-      <section className="relative mb-6 overflow-hidden rounded-lg border border-[#ffc400]/16 bg-[#050505] p-6 text-white shadow-2xl shadow-black/40 md:p-8">
+      <section className="relative mb-6 overflow-hidden rounded-lg border border-[#ffc400]/16 bg-[#050505] p-5 text-white shadow-2xl shadow-black/40 md:p-8">
         <img className="absolute inset-0 h-full w-full object-cover opacity-34" src={settings.default_banner_url ?? defaultHeroUrl} alt="" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-[#050505]/78 to-[#050505]/22" />
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#ffc400]/60 to-transparent" />
         <div className="relative grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
           <div className="max-w-2xl">
-          <p className="text-sm font-black uppercase tracking-[0.22em] text-[#ffc400]">{settings.church_name}</p>
-          <h2 className="mt-3 text-3xl font-black md:text-5xl">{settings.platform_name}</h2>
-          <p className="mt-3 text-base font-medium text-white/82">{settings.welcome_text}</p>
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-[#ffc400] sm:text-sm sm:tracking-[0.22em]">{settings.church_name}</p>
+          <h2 className="mt-3 text-3xl font-black leading-tight md:text-5xl">{settings.platform_name}</h2>
+          <p className="mt-3 text-sm font-medium leading-relaxed text-white/82 sm:text-base">{settings.welcome_text}</p>
           </div>
           <div className="grid w-full gap-3 sm:grid-cols-3 lg:w-[360px]">
             <HeroStat value={activeCourses} label="ativos" />
@@ -101,8 +101,8 @@ export function DashboardPage() {
 
 function HeroStat({ value, label }: { value: number; label: string }) {
   return (
-    <div className="rounded-lg border border-white/12 bg-black/32 p-4 text-center backdrop-blur">
-      <p className="gold-text text-3xl font-black">{value}</p>
+    <div className="rounded-lg border border-white/12 bg-black/32 p-3 text-center backdrop-blur sm:p-4">
+      <p className="gold-text text-2xl font-black sm:text-3xl">{value}</p>
       <p className="mt-1 text-xs font-black uppercase tracking-[0.16em] text-white/62">{label}</p>
     </div>
   )

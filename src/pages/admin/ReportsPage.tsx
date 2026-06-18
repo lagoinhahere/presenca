@@ -67,7 +67,28 @@ export function ReportsPage() {
         <input className="field" type="date" value={to} onChange={(event) => setTo(event.target.value)} />
       </section>
 
-      <section className="card overflow-hidden">
+      <section className="grid gap-3 md:hidden">
+        {filtered.map((item) => (
+          <article key={item.id} className="card p-4">
+            <div className="mb-3 flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="line-clamp-2 text-lg font-black text-[#fff8df]">{item.students?.full_name}</p>
+                <p className="mt-1 text-xs font-bold uppercase tracking-[0.12em] text-[#ffc400]">{formatDateTime(item.checked_in_at)}</p>
+              </div>
+              <span className="chip shrink-0">check-in</span>
+            </div>
+            <div className="grid gap-2 text-sm font-semibold text-[#d9cfaa]">
+              <MobileRow label="Curso" value={item.class_sessions?.courses?.name} />
+              <MobileRow label="Aula" value={item.class_sessions?.name} />
+              <MobileRow label="Contato" value={[item.students?.email, item.students?.phone].filter(Boolean).join(' | ')} />
+              {item.note && <MobileRow label="Obs." value={item.note} />}
+            </div>
+          </article>
+        ))}
+        {filtered.length === 0 && <div className="card p-4 text-sm font-semibold text-[#bfb490]">Nenhuma presenca encontrada com os filtros atuais.</div>}
+      </section>
+
+      <section className="card hidden overflow-hidden md:block">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[920px] text-left text-sm">
             <thead className="bg-[#050505] text-white">
@@ -100,6 +121,15 @@ export function ReportsPage() {
         </div>
       </section>
     </div>
+  )
+}
+
+function MobileRow({ label, value }: { label: string; value?: string | null }) {
+  return (
+    <p className="grid gap-0.5">
+      <span className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[#8f8260]">{label}</span>
+      <span className="break-words">{value || '-'}</span>
+    </p>
   )
 }
 
