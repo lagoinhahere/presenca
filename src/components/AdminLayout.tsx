@@ -4,6 +4,7 @@ import {
   BookOpen,
   CalendarDays,
   ClipboardList,
+  GraduationCap,
   LogOut,
   Menu,
   Settings,
@@ -18,6 +19,7 @@ const nav = [
   { to: '/', label: 'Dashboard', icon: BarChart3 },
   { to: '/courses', label: 'Cursos', icon: BookOpen },
   { to: '/sessions', label: 'Aulas', icon: CalendarDays },
+  { to: '/attendance', label: 'Frequencia', icon: GraduationCap },
   { to: '/reports', label: 'Relatorios', icon: ClipboardList },
   { to: '/settings', label: 'Ajustes', icon: Settings },
 ]
@@ -97,14 +99,14 @@ export function AdminLayout() {
         <Outlet />
       </main>
 
-      <nav className="fixed inset-x-3 bottom-3 z-40 grid grid-cols-5 rounded-lg border border-[#ffc400]/18 bg-[#090907]/92 p-1.5 shadow-2xl shadow-black/60 backdrop-blur-xl lg:hidden">
+      <nav className="fixed inset-x-3 bottom-3 z-40 grid grid-cols-6 rounded-lg border border-[#ffc400]/18 bg-[#090907]/92 p-1.5 shadow-2xl shadow-black/60 backdrop-blur-xl lg:hidden">
         {nav.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
             className={({ isActive }) =>
               cn(
-                'grid min-h-14 place-items-center gap-1 rounded-lg px-1 text-[0.66rem] font-black text-[#bfb490] transition',
+                'grid min-h-14 place-items-center gap-1 rounded-lg px-1 text-[0.6rem] font-black text-[#bfb490] transition',
                 isActive && 'bg-[#ffc400] text-[#050505] shadow-lg shadow-[#ffc400]/18',
               )
             }
