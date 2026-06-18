@@ -38,6 +38,20 @@ export function CheckinPage() {
     setForm((current) => ({ ...current, [key]: value }))
   }
 
+  async function notifyTvMode() {
+    if (!token || !isSupabaseConfigured) return
+    const channel = supabase.channel(`public-checkins-${token}`)
+    channel.subscribe(async (status) => {
+      if (status !== 'SUBSCRIBED') return
+      await channel.send({
+        type: 'broadcast',
+        event: 'checkin-created',
+        payload: { token, at: new Date().toISOString() },
+      })
+      void supabase.removeChannel(channel)
+    })
+  }
+
   async function findOrCreateStudent(): Promise<Student> {
     const normalized = normalizeName(form.full_name)
     const email = form.email.trim().toLowerCase() || null
@@ -73,6 +87,7 @@ export function CheckinPage() {
         throw error
       } else {
         setDone(true)
+        void notifyTvMode()
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Nao foi possivel registrar a presenca.')

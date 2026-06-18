@@ -39,9 +39,9 @@ export function QrDisplayPage() {
   }, [loadCheckinCount, token])
 
   useEffect(() => {
-    if (!session?.id || !isSupabaseConfigured) return
+    if (!session?.id || !token || !isSupabaseConfigured) return
 
-    const channel = supabase
+    const tableChannel = supabase
       .channel(`tv-checkins-${session.id}`)
       .on(
         'postgres_changes',
@@ -52,15 +52,23 @@ export function QrDisplayPage() {
       )
       .subscribe()
 
+    const broadcastChannel = supabase
+      .channel(`public-checkins-${token}`)
+      .on('broadcast', { event: 'checkin-created' }, () => {
+        void loadCheckinCount()
+      })
+      .subscribe()
+
     const interval = window.setInterval(() => {
       void loadCheckinCount()
-    }, 15000)
+    }, 2500)
 
     return () => {
       window.clearInterval(interval)
-      void supabase.removeChannel(channel)
+      void supabase.removeChannel(tableChannel)
+      void supabase.removeChannel(broadcastChannel)
     }
-  }, [loadCheckinCount, session?.id])
+  }, [loadCheckinCount, session?.id, token])
 
   useEffect(() => {
     void loadCheckinCount()

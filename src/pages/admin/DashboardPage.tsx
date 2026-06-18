@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { CalendarCheck, Clock3, MapPin, Sparkles, UsersRound } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { PageHeader } from '../../components/PageHeader'
 import { supabase } from '../../lib/supabase'
 import type { Checkin, ClassSession, Course } from '../../lib/types'
@@ -55,7 +56,7 @@ export function DashboardPage() {
       </section>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <Metric icon={CalendarCheck} label="Cursos ativos" value={activeCourses} detail="programacao em andamento" />
+        <Metric icon={CalendarCheck} label="Cursos ativos" value={activeCourses} detail="programacao em andamento" to="/courses" />
         <Metric icon={Clock3} label="Aulas criadas" value={sessions.length} detail="encontros cadastrados" />
         <Metric icon={UsersRound} label="Check-ins totais" value={checkins.length} detail="ultimos registros carregados" />
         <Metric icon={MapPin} label="Aulas abertas" value={openSessions} detail="prontas para presenca" />
@@ -67,7 +68,12 @@ export function DashboardPage() {
           <div className="grid gap-3">
             {courses.length === 0 && <SoftEmpty text="Nenhum curso ativo encontrado." />}
             {courses.slice(0, 5).map((course) => (
-              <div key={course.id} className="flex items-center gap-4 rounded-lg border border-[#ffc400]/12 bg-white/5 p-3">
+              <Link
+                key={course.id}
+                className="flex items-center gap-4 rounded-lg border border-[#ffc400]/12 bg-white/5 p-3 transition hover:-translate-y-0.5 hover:border-[#ffc400]/30 hover:bg-[#ffc400]/8"
+                to={`/sessions?course=${course.id}`}
+                aria-label={`Abrir aulas de ${course.name}`}
+              >
                 <div className="h-12 w-2 rounded-full" style={{ background: course.color }} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-black">{course.name}</p>
@@ -76,7 +82,7 @@ export function DashboardPage() {
                   </p>
                 </div>
                 <span className="chip">{course.status}</span>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
@@ -108,8 +114,8 @@ function HeroStat({ value, label }: { value: number; label: string }) {
   )
 }
 
-function Metric({ icon: Icon, label, value, detail }: { icon: typeof CalendarCheck; label: string; value: number; detail: string }) {
-  return (
+function Metric({ icon: Icon, label, value, detail, to }: { icon: typeof CalendarCheck; label: string; value: number; detail: string; to?: string }) {
+  const content = (
     <div className="card p-5 transition hover:-translate-y-0.5 hover:border-[#ffc400]/28">
       <div className="mb-5 flex items-center justify-between">
         <div className="grid h-11 w-11 place-items-center rounded-lg bg-[#ffc400]/18 text-[#ffc400]">
@@ -122,6 +128,16 @@ function Metric({ icon: Icon, label, value, detail }: { icon: typeof CalendarChe
       <p className="mt-3 text-xs font-semibold uppercase tracking-[0.13em] text-[#8f8260]">{detail}</p>
     </div>
   )
+
+  if (to) {
+    return (
+      <Link className="block" to={to} aria-label={`Abrir ${label}`}>
+        {content}
+      </Link>
+    )
+  }
+
+  return content
 }
 
 function SectionTitle({ title }: { title: string }) {
