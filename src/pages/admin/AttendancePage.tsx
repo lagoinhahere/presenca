@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Award, BookOpen, Download, Search, UsersRound } from 'lucide-react'
+import { Award, BookOpen, Download, FileSpreadsheet, Search, UsersRound } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '../../components/PageHeader'
 import { useSettings } from '../../contexts/SettingsContext'
@@ -127,9 +127,27 @@ export function AttendancePage() {
     })
   }
 
+  async function handleExportXlsx() {
+    if (!selectedCourse) return
+    if (sessions.length === 0 || filteredStudents.length === 0) {
+      toast.error('Nao ha dados de frequencia para exportar.')
+      return
+    }
+
+    await exportAttendanceXlsx({
+      courseName: selectedCourse.name,
+      sessions,
+      students: filteredStudents,
+    })
+  }
+
   return (
     <div>
-      <PageHeader title="Frequencia dos alunos" eyebrow="Diario de classe" />
+      <PageHeader title="Frequencia dos alunos" eyebrow="Diario de classe">
+        <button className="btn btn-primary" disabled={sessions.length === 0 || filteredStudents.length === 0} onClick={() => void handleExportXlsx()} type="button">
+          <FileSpreadsheet size={18} /> XLSX
+        </button>
+      </PageHeader>
 
       <section className="card mb-5 grid gap-4 p-4 lg:grid-cols-[1fr_auto] lg:items-end">
         <label className="label">
@@ -374,4 +392,44 @@ async function generateCertificate({
   doc.text(`${footerText} | Emitido em ${new Date().toLocaleDateString('pt-BR')}`, width / 2, height - 62, { align: 'center' })
 
   doc.save(`certificado-${normalizeName(studentName).replace(/\s+/g, '-')}.pdf`)
+}
+
+async function exportAttendanceXlsx({
+  courseName,
+  sessions,
+  students,
+}: {
+  courseName: string
+  sessions: ClassSession[]
+  students: AttendanceStudent[]
+}) {
+  const { default: writeXlsxFile } = await import('write-excel-file/browser')
+  const sessionHeaders = sessions.map((session, index) => ({
+    id: session.id,
+    label: `Aula ${index + 1}${session.name ? ` - ${session.name}` : ''}`,
+  }))
+
+  const header = [
+    { value: 'Aluno', fontWeight: 'bold' as const },
+    { value: 'E-mail', fontWeight: 'bold' as const },
+    { value: 'Telefone', fontWeight: 'bold' as const },
+    ...sessionHeaders.map((session) => ({ value: session.label, fontWeight: 'bold' as const })),
+    { value: 'Presencas', fontWeight: 'bold' as const },
+    { value: 'Total de aulas', fontWeight: 'bold' as const },
+    { value: 'Frequencia', fontWeight: 'bold' as const },
+    { value: 'Certificado', fontWeight: 'bold' as const },
+  ]
+
+  const rows = students.map((item) => [
+    { value: item.student.full_name },
+    { value: item.student.email ?? '' },
+    { value: item.student.phone ?? '' },
+    ...sessionHeaders.map((session) => ({ value: item.attendedSessionIds.has(session.id) ? 'Presente' : 'Ausente' })),
+    { value: item.attendanceCount },
+    { value: sessions.length },
+    { value: `${item.percentage}%` },
+    { value: item.percentage >= CERTIFICATE_THRESHOLD ? 'Liberado' : 'Pendente' },
+  ])
+
+  await writeXlsxFile([header, ...rows], { sheet: 'Frequencia' }).toFile(`frequencia-${normalizeName(courseName).replace(/\s+/g, '-')}.xlsx`)
 }
