@@ -145,14 +145,14 @@ Deno.serve(async (request) => {
     }
 
     const bytes = base64ToBytes(base64)
-    const filename = `${crypto.randomUUID()}.webp`
+    const filename = `${crypto.randomUUID()}.png`
     const path = `banners/generated/${filename}`
     const uploadResponse = await fetch(`${supabaseUrl}/storage/v1/object/media/${path}`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${serviceRoleKey}`,
         apikey: serviceRoleKey,
-        'Content-Type': 'image/webp',
+        'Content-Type': 'image/png',
         'x-upsert': 'false',
       },
       body: bytes,

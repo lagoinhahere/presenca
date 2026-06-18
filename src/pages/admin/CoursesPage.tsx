@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import { EmptyState } from '../../components/EmptyState'
 import { Modal } from '../../components/Modal'
 import { PageHeader } from '../../components/PageHeader'
-import { supabase } from '../../lib/supabase'
+import { configuredSupabaseAnonKey, configuredSupabaseUrl, supabase } from '../../lib/supabase'
 import type { Course, CourseStatus } from '../../lib/types'
 import { formatDate } from '../../lib/utils'
 import { useSettings } from '../../contexts/SettingsContext'
@@ -184,26 +184,19 @@ function CourseModal({ course, onClose, onSaved }: { course: Course | null; onCl
 
     setGenerating(true)
     setGeneratedUrl(null)
-    const { data, error } = await supabase.functions.invoke<{
-      banner_url: string
-      path: string
-      prompt: string
-      error?: string
-    }>('generate-course-banner', {
-      body: {
+
+    try {
+      const data = await invokeGenerateBanner({
         description: aiForm.description,
         courseName: form.name || 'Curso ou evento cristao',
         areaText: aiForm.areaText,
         focusVisual: aiForm.focusVisual,
-      },
-    })
-
-    if (error || data?.error) {
-      toast.error(data?.error || (await functionErrorMessage(error)) || 'Nao foi possivel gerar o banner.')
-    } else if (data?.banner_url) {
+      })
       setGeneratedUrl(data.banner_url)
       update('banner_url', data.banner_url)
       toast.success('Banner gerado e aplicado ao curso.')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Nao foi possivel gerar o banner.')
     }
     setGenerating(false)
   }
@@ -396,19 +389,42 @@ function CourseModal({ course, onClose, onSaved }: { course: Course | null; onCl
   )
 }
 
-async function functionErrorMessage(error: unknown) {
-  if (!error) return null
-  if (typeof error === 'object' && 'context' in error) {
-    const context = (error as { context?: unknown }).context
-    if (context instanceof Response) {
-      try {
-        const body = await context.clone().json()
-        if (typeof body?.error === 'string') return body.error
-      } catch {
-        const text = await context.clone().text()
-        if (text) return text
-      }
-    }
+async function invokeGenerateBanner(body: { description: string; courseName: string; areaText: string; focusVisual: string }) {
+  if (!configuredSupabaseUrl || !configuredSupabaseAnonKey) {
+    throw new Error('Supabase nao configurado no front-end.')
   }
-  return error instanceof Error ? error.message : null
+
+  const { data: sessionData } = await supabase.auth.getSession()
+  const accessToken = sessionData.session?.access_token
+  if (!accessToken) {
+    throw new Error('Sessao administrativa expirada. Faca login novamente.')
+  }
+
+  const response = await fetch(`${configuredSupabaseUrl.replace(/\/$/, '')}/functions/v1/generate-course-banner`, {
+    method: 'POST',
+    headers: {
+      apikey: configuredSupabaseAnonKey,
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  })
+
+  const text = await response.text()
+  let payload: { banner_url?: string; error?: string } | null
+  try {
+    payload = text ? JSON.parse(text) : null
+  } catch {
+    payload = null
+  }
+
+  if (!response.ok) {
+    throw new Error(payload?.error || text || `Erro ${response.status} ao gerar o banner.`)
+  }
+
+  if (!payload?.banner_url) {
+    throw new Error('A funcao nao retornou a URL do banner.')
+  }
+
+  return { banner_url: payload.banner_url }
 }
