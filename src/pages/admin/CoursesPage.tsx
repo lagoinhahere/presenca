@@ -199,7 +199,7 @@ function CourseModal({ course, onClose, onSaved }: { course: Course | null; onCl
     })
 
     if (error || data?.error) {
-      toast.error(data?.error || error?.message || 'Nao foi possivel gerar o banner.')
+      toast.error(data?.error || (await functionErrorMessage(error)) || 'Nao foi possivel gerar o banner.')
     } else if (data?.banner_url) {
       setGeneratedUrl(data.banner_url)
       update('banner_url', data.banner_url)
@@ -394,4 +394,21 @@ function CourseModal({ course, onClose, onSaved }: { course: Course | null; onCl
       </form>
     </Modal>
   )
+}
+
+async function functionErrorMessage(error: unknown) {
+  if (!error) return null
+  if (typeof error === 'object' && 'context' in error) {
+    const context = (error as { context?: unknown }).context
+    if (context instanceof Response) {
+      try {
+        const body = await context.clone().json()
+        if (typeof body?.error === 'string') return body.error
+      } catch {
+        const text = await context.clone().text()
+        if (text) return text
+      }
+    }
+  }
+  return error instanceof Error ? error.message : null
 }

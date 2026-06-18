@@ -117,6 +117,8 @@ Deno.serve(async (request) => {
       focusVisual: body.focusVisual?.trim() || 'lado direito ou centro-direita',
     })
 
+    console.info('Generating banner image', { courseName: body.courseName, size: '1536x1024' })
+
     const imageResponse = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
       headers: {
@@ -124,17 +126,16 @@ Deno.serve(async (request) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-image-2',
+        model: 'gpt-image-1',
         prompt,
-        size: '1600x900',
+        size: '1536x1024',
         quality: 'high',
-        output_format: 'webp',
-        output_compression: 86,
       }),
     })
 
     const imagePayload = await imageResponse.json()
     if (!imageResponse.ok) {
+      console.error('OpenAI image generation failed', imagePayload)
       return json({ error: imagePayload?.error?.message ?? 'Nao foi possivel gerar a imagem.' }, imageResponse.status)
     }
 
@@ -159,6 +160,7 @@ Deno.serve(async (request) => {
 
     if (!uploadResponse.ok) {
       const uploadError = await uploadResponse.text()
+      console.error('Storage upload failed', uploadError)
       return json({ error: `Imagem gerada, mas o upload falhou: ${uploadError}` }, 502)
     }
 
