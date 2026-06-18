@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { ImagePlus, Loader2, Save, UploadCloud } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '../../components/PageHeader'
@@ -12,6 +12,10 @@ export function SettingsPage() {
   const [form, setForm] = useState<AppSettings>(settings)
   const [uploading, setUploading] = useState<string | null>(null)
   const [lastUpload, setLastUpload] = useState<string | null>(null)
+
+  useEffect(() => {
+    setForm(settings)
+  }, [settings])
 
   function update(key: keyof AppSettings, value: string) {
     setForm((current) => ({ ...current, [key]: value }))

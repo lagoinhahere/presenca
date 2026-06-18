@@ -1,6 +1,10 @@
 @import "tailwindcss";
 
 :root {
+  --brand-primary: #ffc400;
+  --brand-accent: #ffc400;
+  --brand-primary-rgb: 255 196 0;
+  --brand-accent-rgb: 255 196 0;
   color: #f8f3df;
   background: #060604;
   font-family:
@@ -22,7 +26,7 @@ body {
   min-height: 100svh;
   margin: 0;
   background:
-    radial-gradient(circle at top left, rgba(255, 196, 0, 0.18), transparent 34rem),
+    radial-gradient(circle at top left, rgb(var(--brand-primary-rgb) / 0.18), transparent 34rem),
     radial-gradient(circle at 82% 12%, rgba(255, 255, 255, 0.08), transparent 22rem),
     linear-gradient(135deg, #050505 0%, #10100b 42%, #070706 100%);
 }
@@ -34,8 +38,8 @@ body::before {
   pointer-events: none;
   content: "";
   background-image:
-    linear-gradient(rgba(255, 196, 0, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 196, 0, 0.035) 1px, transparent 1px);
+    linear-gradient(rgb(var(--brand-primary-rgb) / 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(var(--brand-primary-rgb) / 0.035) 1px, transparent 1px);
   background-size: 72px 72px;
   mask-image: radial-gradient(circle at top, black, transparent 72%);
 }
@@ -58,14 +62,14 @@ button {
 }
 
 .glass {
-  border: 1px solid rgba(255, 196, 0, 0.18);
+  border: 1px solid rgb(var(--brand-primary-rgb) / 0.18);
   background: rgba(17, 16, 12, 0.82);
   box-shadow: 0 26px 90px rgba(0, 0, 0, 0.42);
   backdrop-filter: blur(24px);
 }
 
 .gold-text {
-  background: linear-gradient(135deg, #fff5c2, #ffc400 48%, #9f7800);
+  background: linear-gradient(135deg, #fff5c2, var(--brand-accent) 48%, var(--brand-primary));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -74,7 +78,7 @@ button {
 .field {
   width: 100%;
   border-radius: 8px;
-  border: 1px solid rgba(255, 196, 0, 0.18);
+  border: 1px solid rgb(var(--brand-primary-rgb) / 0.18);
   background: rgba(7, 7, 6, 0.84);
   padding: 0.75rem 0.85rem;
   color: #fff8df;
@@ -86,9 +90,9 @@ button {
 }
 
 .field:focus {
-  border-color: #ffc400;
+  border-color: var(--brand-accent);
   background: rgba(12, 12, 10, 0.96);
-  box-shadow: 0 0 0 4px rgba(255, 196, 0, 0.18);
+  box-shadow: 0 0 0 4px rgb(var(--brand-accent-rgb) / 0.18);
 }
 
 .label {
@@ -128,20 +132,20 @@ button {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #ffd84d, #ffc400 48%, #b58b00);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--brand-accent), white 26%), var(--brand-accent) 48%, var(--brand-primary));
   color: #080806;
-  box-shadow: 0 16px 42px rgba(255, 196, 0, 0.22);
+  box-shadow: 0 16px 42px rgb(var(--brand-accent-rgb) / 0.22);
 }
 
 .btn-soft {
-  border-color: rgba(255, 196, 0, 0.18);
+  border-color: rgb(var(--brand-primary-rgb) / 0.18);
   background: rgba(255, 255, 255, 0.06);
   color: #fff8df;
 }
 
 .btn-soft:hover {
-  border-color: rgba(255, 196, 0, 0.36);
-  background: rgba(255, 196, 0, 0.1);
+  border-color: rgb(var(--brand-accent-rgb) / 0.36);
+  background: rgb(var(--brand-accent-rgb) / 0.1);
 }
 
 .btn-danger {
@@ -154,7 +158,7 @@ button {
   align-items: center;
   gap: 0.35rem;
   border-radius: 999px;
-  border: 1px solid rgba(255, 196, 0, 0.18);
+  border: 1px solid rgb(var(--brand-primary-rgb) / 0.18);
   background: rgba(255, 255, 255, 0.08);
   padding: 0.32rem 0.62rem;
   color: #f8f3df;
@@ -166,7 +170,7 @@ button {
   position: relative;
   overflow: hidden;
   border-radius: 8px;
-  border: 1px solid rgba(255, 196, 0, 0.12);
+  border: 1px solid rgb(var(--brand-primary-rgb) / 0.12);
   background: linear-gradient(180deg, rgba(24, 23, 18, 0.92), rgba(13, 13, 11, 0.9));
   box-shadow: 0 20px 70px rgba(0, 0, 0, 0.34);
 }
@@ -176,7 +180,7 @@ button {
   inset: 0 0 auto;
   height: 1px;
   content: "";
-  background: linear-gradient(90deg, transparent, rgba(255, 196, 0, 0.42), transparent);
+  background: linear-gradient(90deg, transparent, rgb(var(--brand-accent-rgb) / 0.42), transparent);
 }
 
 @media (max-width: 639px) {
@@ -190,7 +194,7 @@ button {
 }
 
 .premium-panel {
-  border: 1px solid rgba(255, 196, 0, 0.16);
+  border: 1px solid rgb(var(--brand-primary-rgb) / 0.16);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent),
     rgba(10, 10, 8, 0.86);
