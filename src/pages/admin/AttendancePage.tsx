@@ -68,9 +68,11 @@ export function AttendancePage() {
 
   const students = useMemo(() => {
     const byStudent = new Map<string, AttendanceStudent>()
+    const validSessionIds = new Set(sessions.map((session) => session.id))
 
     checkins.forEach((checkin) => {
       if (!checkin.students) return
+      if (!validSessionIds.has(checkin.class_id)) return
       const current = byStudent.get(checkin.student_id) ?? {
         student: checkin.students,
         attendedSessionIds: new Set<string>(),
@@ -85,11 +87,11 @@ export function AttendancePage() {
     return [...byStudent.values()]
       .map((item) => {
         const attendanceCount = item.attendedSessionIds.size
-        const percentage = totalSessions > 0 ? Math.round((attendanceCount / totalSessions) * 100) : 0
+        const percentage = totalSessions > 0 ? Math.min(100, Math.round((attendanceCount / totalSessions) * 100)) : 0
         return { ...item, attendanceCount, percentage }
       })
       .sort((a, b) => b.percentage - a.percentage || a.student.full_name.localeCompare(b.student.full_name))
-  }, [checkins, sessions.length])
+  }, [checkins, sessions])
 
   const filteredStudents = useMemo(() => {
     const term = search.trim().toLowerCase()
@@ -328,7 +330,7 @@ async function generateCertificate({
 
   doc.setTextColor(255, 248, 223)
   doc.setFontSize(38)
-  doc.text('Certificado de Conclusao', width / 2, 150, { align: 'center' })
+  doc.text('Certificado de conclusao', width / 2, 150, { align: 'center' })
 
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(15)
@@ -354,7 +356,7 @@ async function generateCertificate({
   doc.setFontSize(13)
   doc.setTextColor(210, 204, 180)
   doc.text(
-    `com ${percentage}% de frequencia (${attendanceCount} de ${totalSessions} encontros).`,
+    `com ${percentage}% de frequencia (${Math.min(attendanceCount, totalSessions)} de ${totalSessions} encontros).`,
     width / 2,
     400,
     { align: 'center' },
