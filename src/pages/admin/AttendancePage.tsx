@@ -51,7 +51,6 @@ export function AttendancePage() {
         .from('class_sessions')
         .select('*, courses(id,name,color,banner_url,location)')
         .eq('course_id', selectedCourseId)
-        .neq('status', 'archived')
         .order('session_date', { ascending: true }),
       supabase
         .from('checkins')
