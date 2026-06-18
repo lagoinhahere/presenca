@@ -1,11 +1,11 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Archive, CalendarDays, ImagePlus, LinkIcon, Loader2, Pencil, Plus, Sparkles, Trash2, UploadCloud, X } from 'lucide-react'
+import { Archive, CalendarDays, LinkIcon, Loader2, Pencil, Plus, Trash2, UploadCloud, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { EmptyState } from '../../components/EmptyState'
 import { Modal } from '../../components/Modal'
 import { PageHeader } from '../../components/PageHeader'
-import { configuredSupabaseAnonKey, configuredSupabaseUrl, supabase } from '../../lib/supabase'
+import { supabase } from '../../lib/supabase'
 import type { Course, CourseStatus } from '../../lib/types'
 import { formatDate } from '../../lib/utils'
 import { useSettings } from '../../contexts/SettingsContext'
@@ -136,14 +136,7 @@ export function CoursesPage() {
 function CourseModal({ course, onClose, onSaved }: { course: Course | null; onClose: () => void; onSaved: () => void }) {
   const [form, setForm] = useState({ ...blankCourse, ...(course ?? {}) })
   const [uploading, setUploading] = useState(false)
-  const [generating, setGenerating] = useState(false)
-  const [generatedUrl, setGeneratedUrl] = useState<string | null>(null)
   const [selectedFile, setSelectedFile] = useState<string | null>(null)
-  const [aiForm, setAiForm] = useState({
-    description: '',
-    areaText: 'lado esquerdo',
-    focusVisual: 'lado direito ou centro-direita',
-  })
 
   function update(key: keyof typeof blankCourse, value: string) {
     setForm((current) => ({ ...current, [key]: value }))
@@ -170,35 +163,6 @@ function CourseModal({ course, onClose, onSaved }: { course: Course | null; onCl
       toast.success('Banner enviado.')
     }
     setUploading(false)
-  }
-
-  function updateAi(key: keyof typeof aiForm, value: string) {
-    setAiForm((current) => ({ ...current, [key]: value }))
-  }
-
-  async function generateBanner() {
-    if (!aiForm.description.trim()) {
-      toast.error('Descreva o banner que deseja gerar.')
-      return
-    }
-
-    setGenerating(true)
-    setGeneratedUrl(null)
-
-    try {
-      const data = await invokeGenerateBanner({
-        description: aiForm.description,
-        courseName: form.name || 'Curso ou evento cristao',
-        areaText: aiForm.areaText,
-        focusVisual: aiForm.focusVisual,
-      })
-      setGeneratedUrl(data.banner_url)
-      update('banner_url', data.banner_url)
-      toast.success('Banner gerado e aplicado ao curso.')
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Nao foi possivel gerar o banner.')
-    }
-    setGenerating(false)
   }
 
   async function submit(event: FormEvent) {
@@ -276,68 +240,6 @@ function CourseModal({ course, onClose, onSaved }: { course: Course | null; onCl
             <input className="field h-12 p-1" type="color" value={form.color} onChange={(event) => update('color', event.target.value)} />
           </label>
           <div className="md:col-span-2 grid gap-3">
-            <div className="rounded-lg border border-[#ffc400]/18 bg-[#ffc400]/7 p-4">
-              <div className="mb-4 flex items-start gap-3">
-                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-[#ffc400]/18 text-[#ffc400]">
-                  <Sparkles size={22} />
-                </span>
-                <div>
-                  <p className="font-black text-[#fff8df]">Gerar banner com IA</p>
-                  <p className="mt-1 text-xs font-semibold leading-relaxed text-[#bfb490]">
-                    Descreva o tema e o sistema gera um banner 16:9 sem texto, pronto para usar no curso.
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid gap-3 md:grid-cols-2">
-                <label className="label md:col-span-2">
-                  Descricao do banner
-                  <textarea
-                    className="field min-h-24"
-                    placeholder="Ex.: batalha espiritual e libertacao, Biblia aberta, luz dourada, atmosfera reverente e moderna"
-                    value={aiForm.description}
-                    onChange={(event) => updateAi('description', event.target.value)}
-                  />
-                </label>
-                <label className="label">
-                  Area livre para texto
-                  <select className="field" value={aiForm.areaText} onChange={(event) => updateAi('areaText', event.target.value)}>
-                    <option value="lado esquerdo">Lado esquerdo</option>
-                    <option value="lado direito">Lado direito</option>
-                    <option value="centro com respiro nas laterais">Centro com respiro nas laterais</option>
-                    <option value="terco inferior">Terco inferior</option>
-                  </select>
-                </label>
-                <label className="label">
-                  Foco visual
-                  <select className="field" value={aiForm.focusVisual} onChange={(event) => updateAi('focusVisual', event.target.value)}>
-                    <option value="lado direito ou centro-direita">Lado direito / centro-direita</option>
-                    <option value="lado esquerdo ou centro-esquerda">Lado esquerdo / centro-esquerda</option>
-                    <option value="centro da imagem">Centro</option>
-                    <option value="fundo com profundidade, sem elemento dominante">Fundo profundo sem foco dominante</option>
-                  </select>
-                </label>
-              </div>
-
-              {generatedUrl && (
-                <div className="mt-4 overflow-hidden rounded-lg border border-[#ffc400]/15 bg-black/38">
-                  <img className="aspect-video w-full object-cover" src={generatedUrl} alt="Banner gerado por IA" />
-                </div>
-              )}
-
-              <div className="mt-4 grid gap-2 sm:flex sm:items-center">
-                <button className="btn btn-primary" disabled={generating} onClick={generateBanner} type="button">
-                  {generating ? <Loader2 className="animate-spin" size={18} /> : <ImagePlus size={18} />}
-                  {generating ? 'Gerando banner...' : 'Gerar e aplicar banner'}
-                </button>
-                {generatedUrl && (
-                  <button className="btn btn-soft" onClick={() => update('banner_url', generatedUrl)} type="button">
-                    <Sparkles size={16} /> Usar esta imagem
-                  </button>
-                )}
-              </div>
-            </div>
-
             <label className="label">
               Banner do curso
               <span className="relative flex min-h-40 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-[#ffc400]/35 bg-[#ffc400]/8 p-5 text-center transition hover:border-[#ffc400]/70 hover:bg-[#ffc400]/12">
@@ -387,44 +289,4 @@ function CourseModal({ course, onClose, onSaved }: { course: Course | null; onCl
       </form>
     </Modal>
   )
-}
-
-async function invokeGenerateBanner(body: { description: string; courseName: string; areaText: string; focusVisual: string }) {
-  if (!configuredSupabaseUrl || !configuredSupabaseAnonKey) {
-    throw new Error('Supabase nao configurado no front-end.')
-  }
-
-  const { data: sessionData } = await supabase.auth.getSession()
-  const accessToken = sessionData.session?.access_token
-  if (!accessToken) {
-    throw new Error('Sessao administrativa expirada. Faca login novamente.')
-  }
-
-  const response = await fetch(`${configuredSupabaseUrl.replace(/\/$/, '')}/functions/v1/generate-course-banner`, {
-    method: 'POST',
-    headers: {
-      apikey: configuredSupabaseAnonKey,
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(body),
-  })
-
-  const text = await response.text()
-  let payload: { banner_url?: string; error?: string } | null
-  try {
-    payload = text ? JSON.parse(text) : null
-  } catch {
-    payload = null
-  }
-
-  if (!response.ok) {
-    throw new Error(payload?.error || text || `Erro ${response.status} ao gerar o banner.`)
-  }
-
-  if (!payload?.banner_url) {
-    throw new Error('A funcao nao retornou a URL do banner.')
-  }
-
-  return { banner_url: payload.banner_url }
 }

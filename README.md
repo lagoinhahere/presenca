@@ -82,39 +82,6 @@ O schema cria:
 - bucket publico `media`
 - indices, triggers `updated_at`, relacionamentos e politicas RLS
 
-## Geracao de banners com IA
-
-O app inclui uma Supabase Edge Function em `supabase/functions/generate-course-banner`.
-Ela usa sua chave da OpenAI no servidor, gera uma imagem 16:9 e salva o arquivo no bucket publico `media`.
-
-Nunca coloque `OPENAI_API_KEY` em `.env` do Vite ou em secrets do GitHub Pages. Essa chave deve ficar apenas no Supabase.
-
-### Secrets da Edge Function
-
-No terminal, com Supabase CLI instalado e logado:
-
-```bash
-supabase link --project-ref SEU_PROJECT_REF
-supabase secrets set OPENAI_API_KEY=sua_chave_openai
-supabase secrets set SUPABASE_SERVICE_ROLE_KEY=sua_service_role_key
-```
-
-O Supabase fornece `SUPABASE_URL` automaticamente para Edge Functions. Se o seu projeto exigir, configure tambem:
-
-```bash
-supabase secrets set SUPABASE_URL=https://seu-projeto.supabase.co
-```
-
-### Deploy da funcao
-
-```bash
-supabase functions deploy generate-course-banner
-```
-
-Depois disso, no modal de cursos/eventos, use o bloco **Gerar banner com IA**.
-
-A funcao valida se o usuario logado e administrador antes de gerar imagens.
-
 ## Deploy no GitHub Pages
 
 Repositorio alvo: `https://github.com/lagoinhahere/presenca`.
@@ -140,7 +107,6 @@ https://lagoinhahere.github.io/presenca/
 - Rotas protegidas
 - Dashboard com cursos ativos, aulas, check-ins e presencas recentes
 - CRUD de cursos/eventos com banner, cor, status, local e observacoes
-- Geracao de banners com IA via Supabase Edge Function e OpenAI
 - CRUD de aulas/encontros com QR Code unico
 - Tela publica de QR Code para projetor/TV
 - Check-in publico mobile-first
