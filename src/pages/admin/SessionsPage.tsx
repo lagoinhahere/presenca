@@ -100,7 +100,7 @@ export function SessionsPage() {
                 </div>
                 <h2 className="line-clamp-2 text-xl font-black sm:text-2xl lg:truncate">{session.name}</h2>
                 <p className="mt-1 text-sm font-semibold text-[#bfb490]">
-                  {formatDate(session.session_date)} {session.starts_at ? `as ${session.starts_at}` : ''} {session.location ? `- ${session.location}` : ''}
+                  {formatDate(session.session_date)} {session.starts_at ? `as ${formatTime24(session.starts_at)}` : ''} {session.location ? `- ${session.location}` : ''}
                 </p>
                 {session.description && <p className="mt-2 line-clamp-2 text-sm font-medium text-[#bfb490]">{session.description}</p>}
               </div>
@@ -181,12 +181,18 @@ function SessionModal({
 
   async function submit(event: FormEvent) {
     event.preventDefault()
+    const rawStartsAt = form.starts_at ?? ''
+    const startsAt = normalizeTime24(rawStartsAt)
+    if (rawStartsAt && !startsAt) {
+      toast.error('Informe o horario no formato 24h, por exemplo 20:00.')
+      return
+    }
     const payload = {
       course_id: form.course_id,
       name: form.name,
       description: form.description || null,
       session_date: form.session_date || null,
-      starts_at: form.starts_at || null,
+      starts_at: startsAt,
       location: form.location || null,
       status: form.status,
       qr_token: session?.qr_token ?? crypto.randomUUID(),
@@ -229,7 +235,16 @@ function SessionModal({
           </label>
           <label className="label">
             Horario
-            <input className="field" type="time" value={form.starts_at ?? ''} onChange={(event) => update('starts_at', event.target.value)} />
+            <input
+              className="field"
+              inputMode="numeric"
+              maxLength={5}
+              pattern="^([01][0-9]|2[0-3]):[0-5][0-9]$"
+              placeholder="20:00"
+              value={formatTimeInput(form.starts_at ?? '')}
+              onBlur={(event) => update('starts_at', normalizeTime24(event.target.value) ?? event.target.value)}
+              onChange={(event) => update('starts_at', maskTime24(event.target.value))}
+            />
           </label>
           <label className="label">
             Local
@@ -257,4 +272,31 @@ function SessionModal({
       </form>
     </Modal>
   )
+}
+
+function formatTime24(value?: string | null) {
+  if (!value) return ''
+  return value.slice(0, 5)
+}
+
+function formatTimeInput(value: string) {
+  return formatTime24(value)
+}
+
+function maskTime24(value: string) {
+  const digits = value.replace(/\D/g, '').slice(0, 4)
+  if (digits.length <= 2) return digits
+  return `${digits.slice(0, 2)}:${digits.slice(2)}`
+}
+
+function normalizeTime24(value: string) {
+  const trimmed = value.trim()
+  const match = /^(\d{1,2}):?(\d{2})(?::\d{2})?$/.exec(trimmed)
+  if (!match) return trimmed ? null : null
+
+  const hours = Number(match[1])
+  const minutes = Number(match[2])
+  if (hours > 23 || minutes > 59) return null
+
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
 }
