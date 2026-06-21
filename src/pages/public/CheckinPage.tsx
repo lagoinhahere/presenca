@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { CheckCircle2, Loader2, UserCheck } from 'lucide-react'
+import { CheckCircle2, Loader2, Mail, UserCheck } from 'lucide-react'
 import { useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { isSupabaseConfigured, supabase } from '../../lib/supabase'
@@ -8,6 +8,13 @@ import { formatDate, normalizeName } from '../../lib/utils'
 import { useSettings } from '../../contexts/SettingsContext'
 import { defaultHeroUrl } from '../../lib/assets'
 
+type CheckinForm = {
+  full_name: string
+  email: string
+  note: string
+  send_receipt: boolean
+}
+
 export function CheckinPage() {
   const { token } = useParams()
   const { settings } = useSettings()
@@ -15,7 +22,8 @@ export function CheckinPage() {
   const [loading, setLoading] = useState(true)
   const [done, setDone] = useState(false)
   const [busy, setBusy] = useState(false)
-  const [form, setForm] = useState({ full_name: '', email: '', phone: '', note: '' })
+  const [receiptSent, setReceiptSent] = useState(false)
+  const [form, setForm] = useState<CheckinForm>({ full_name: '', email: '', note: '', send_receipt: false })
 
   useEffect(() => {
     if (!token) return
@@ -34,11 +42,11 @@ export function CheckinPage() {
       })
   }, [token])
 
-  function update(key: keyof typeof form, value: string) {
+  function update<K extends keyof CheckinForm>(key: K, value: CheckinForm[K]) {
     setForm((current) => ({ ...current, [key]: value }))
   }
 
-  async function notifyTvMode() {
+  async function notifyTvMode(fullName: string, checkinId: string) {
     if (!token || !isSupabaseConfigured) return
     const channel = supabase.channel(`public-checkins-${token}`)
     channel.subscribe(async (status) => {
@@ -46,7 +54,7 @@ export function CheckinPage() {
       await channel.send({
         type: 'broadcast',
         event: 'checkin-created',
-        payload: { token, at: new Date().toISOString() },
+        payload: { token, checkin_id: checkinId, full_name: fullName, at: new Date().toISOString() },
       })
       void supabase.removeChannel(channel)
     })
@@ -55,14 +63,13 @@ export function CheckinPage() {
   async function findOrCreateStudent(): Promise<Student> {
     const normalized = normalizeName(form.full_name)
     const email = form.email.trim().toLowerCase() || null
-    const phone = form.phone.trim() || null
-    const query = email ? `email.eq.${email}` : phone ? `phone.eq.${phone}` : `normalized_name.eq.${normalized}`
+    const query = email ? `email.eq.${email}` : `normalized_name.eq.${normalized}`
     const existing = await supabase.from('students').select('*').or(query).limit(1).maybeSingle()
     if (existing.data) return existing.data
 
     const inserted = await supabase
       .from('students')
-      .insert({ full_name: form.full_name.trim(), normalized_name: normalized, email, phone })
+      .insert({ full_name: form.full_name.trim(), normalized_name: normalized, email, phone: null })
       .select('*')
       .single()
     if (inserted.error) throw inserted.error
@@ -75,11 +82,16 @@ export function CheckinPage() {
     setBusy(true)
     try {
       const student = await findOrCreateStudent()
-      const { error } = await supabase.from('checkins').insert({
-        class_id: session.id,
-        student_id: student.id,
-        note: form.note.trim() || null,
-      })
+      const { data: checkin, error } = await supabase
+        .from('checkins')
+        .insert({
+          class_id: session.id,
+          student_id: student.id,
+          note: form.note.trim() || null,
+          receipt_requested: form.send_receipt,
+        })
+        .select('id')
+        .single()
       if (error?.code === '23505') {
         toast.info('Sua presenca ja estava registrada para esta aula.')
         setDone(true)
@@ -87,7 +99,17 @@ export function CheckinPage() {
         throw error
       } else {
         setDone(true)
-        void notifyTvMode()
+        void notifyTvMode(student.full_name, checkin.id)
+        if (form.send_receipt) {
+          const { error: receiptError } = await supabase.functions.invoke('send-checkin-receipt', {
+            body: { checkinId: checkin.id },
+          })
+          if (receiptError) {
+            toast.warning('Presenca confirmada, mas o comprovante nao pode ser enviado agora.')
+          } else {
+            setReceiptSent(true)
+          }
+        }
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Nao foi possivel registrar a presenca.')
@@ -107,7 +129,7 @@ export function CheckinPage() {
   return (
     <main className="min-h-screen bg-[#060604]">
       <section className="relative overflow-hidden bg-[#050505] px-5 py-12 text-white">
-        <img className="absolute inset-0 h-full w-full object-cover opacity-32" src={session?.courses?.banner_url || settings.default_banner_url || defaultHeroUrl} alt="" />
+        <img className="absolute inset-0 h-full w-full object-cover opacity-32" src={session?.banner_url || session?.courses?.banner_url || settings.default_banner_url || defaultHeroUrl} alt="" />
         <div className="absolute inset-0 bg-gradient-to-br from-[#050505] via-[#050505]/84 to-[#ffc400]/36" />
         <div className="relative mx-auto max-w-xl">
           <div className="mb-5 h-1 w-16 rounded-full bg-[#ffc400]" />
@@ -116,7 +138,7 @@ export function CheckinPage() {
           <p className="mt-3 text-base font-semibold text-white/82">{session?.courses?.name}</p>
           <div className="mt-5 flex flex-wrap gap-2">
             <span className="chip border-white/25 bg-white/12 text-white">{formatDate(session?.session_date)}</span>
-            {session?.starts_at && <span className="chip border-white/25 bg-white/12 text-white">{session.starts_at}</span>}
+            {session?.starts_at && <span className="chip border-white/25 bg-white/12 text-white">{session.starts_at.slice(0, 5)}</span>}
           </div>
         </div>
       </section>
@@ -129,6 +151,12 @@ export function CheckinPage() {
             </div>
             <h2 className="text-2xl font-black">Presenca confirmada</h2>
             <p className="mt-2 font-medium text-[#bfb490]">Obrigado! Seu check-in foi registrado com sucesso.</p>
+            {receiptSent && (
+              <div className="mt-4 flex items-center justify-center gap-2 rounded-lg border border-[rgb(var(--brand-accent-rgb)/0.2)] bg-[rgb(var(--brand-accent-rgb)/0.08)] px-4 py-3 text-sm font-bold text-[#fff8df]">
+                <Mail size={17} className="text-[var(--brand-accent)]" />
+                Comprovante enviado para {form.email}
+              </div>
+            )}
           </div>
         ) : (
           <form className="card grid gap-4 p-5 shadow-2xl shadow-black/40" onSubmit={submit}>
@@ -145,11 +173,20 @@ export function CheckinPage() {
             </label>
             <label className="label">
               E-mail opcional
-              <input className="field" type="email" value={form.email} onChange={(event) => update('email', event.target.value)} />
+              <input className="field" type="email" value={form.email} onChange={(event) => update('email', event.target.value)} required={form.send_receipt} />
             </label>
-            <label className="label">
-              Telefone opcional
-              <input className="field" value={form.phone} onChange={(event) => update('phone', event.target.value)} />
+            <label className={`flex items-start gap-3 rounded-lg border p-4 transition ${form.email ? 'cursor-pointer border-[rgb(var(--brand-accent-rgb)/0.2)] bg-[rgb(var(--brand-accent-rgb)/0.07)]' : 'cursor-not-allowed border-white/8 bg-white/[0.025] opacity-55'}`}>
+              <input
+                className="mt-1 h-4 w-4 accent-[var(--brand-accent)]"
+                type="checkbox"
+                checked={form.send_receipt}
+                disabled={!form.email}
+                onChange={(event) => update('send_receipt', event.target.checked)}
+              />
+              <span>
+                <span className="flex items-center gap-2 text-sm font-black text-[#fff8df]"><Mail size={16} className="text-[var(--brand-accent)]" /> Receber comprovante por e-mail</span>
+                <span className="mt-1 block text-xs font-semibold leading-relaxed text-[#9f9479]">Enviaremos os dados desta aula e a confirmacao da sua participacao.</span>
+              </span>
             </label>
             <label className="label">
               Observacao

@@ -114,6 +114,31 @@ https://lagoinhahere.github.io/presenca/
 - Historico com busca, periodo e exportacao CSV/XLSX
 - Configuracoes de plataforma, logo, cores, imagem padrao e textos
 - Upload de logos e banners no Supabase Storage
+- Imagem individual por aula, com fallback para o banner do curso
+- Fila de confirmacoes ao vivo no modo TV
+- Comprovante de participacao opcional por e-mail
+
+## Comprovante por e-mail
+
+O comprovante e enviado pela Edge Function `send-checkin-receipt`. O projeto usa o Resend como provedor; a chave fica somente no Supabase e nunca e enviada ao navegador.
+
+1. Crie uma conta no [Resend](https://resend.com/) e uma API Key.
+2. Valide um dominio no Resend para enviar mensagens a qualquer participante.
+3. No terminal, dentro deste projeto, configure os segredos:
+
+```bash
+supabase secrets set RESEND_API_KEY=re_sua_chave
+supabase secrets set "CHECKIN_FROM_EMAIL=Lagoinha Here! <presenca@seu-dominio.com>"
+```
+
+4. Aplique a migracao e publique a funcao:
+
+```bash
+supabase db push
+supabase functions deploy send-checkin-receipt
+```
+
+As variaveis `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` ja existem automaticamente dentro das Edge Functions. Nao tente cadastra-las manualmente e nunca coloque a service role no front-end.
 
 ## Observacoes de seguranca
 

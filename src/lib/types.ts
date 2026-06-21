@@ -46,6 +46,7 @@ export type ClassSession = {
   session_date: string | null
   starts_at: string | null
   location: string | null
+  banner_url: string | null
   status: ClassStatus
   qr_token: string
   created_at?: string
@@ -68,6 +69,8 @@ export type Checkin = {
   class_id: string
   student_id: string
   note: string | null
+  receipt_requested?: boolean
+  receipt_sent_at?: string | null
   checked_in_at: string
   students?: Student
   class_sessions?: ClassSession & { courses?: Course }

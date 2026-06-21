@@ -1,12 +1,17 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { QRCodeSVG } from 'qrcode.react'
-import { CalendarDays, Clock3, ExternalLink, MapPin, UsersRound, Wifi } from 'lucide-react'
+import { CalendarDays, CheckCircle2, Clock3, ExternalLink, MapPin, UsersRound, Wifi } from 'lucide-react'
 import { isSupabaseConfigured, supabase } from '../../lib/supabase'
 import type { ClassSession } from '../../lib/types'
 import { publicCheckinUrl, formatDate } from '../../lib/utils'
 import { useSettings } from '../../contexts/SettingsContext'
 import { brandLogoUrl, defaultHeroUrl } from '../../lib/assets'
+
+type CheckinNotification = {
+  id: string
+  fullName: string
+}
 
 export function QrDisplayPage() {
   const { token } = useParams()
@@ -14,6 +19,14 @@ export function QrDisplayPage() {
   const [session, setSession] = useState<ClassSession | null>(null)
   const [checkinCount, setCheckinCount] = useState(0)
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null)
+  const [notificationQueue, setNotificationQueue] = useState<CheckinNotification[]>([])
+  const seenNotifications = useRef(new Set<string>())
+
+  const enqueueNotification = useCallback((notification: CheckinNotification) => {
+    if (!notification.fullName || seenNotifications.current.has(notification.id)) return
+    seenNotifications.current.add(notification.id)
+    setNotificationQueue((current) => [...current, notification])
+  }, [])
 
   const loadCheckinCount = useCallback(async () => {
     if (!token || !isSupabaseConfigured) return
@@ -54,8 +67,11 @@ export function QrDisplayPage() {
 
     const broadcastChannel = supabase
       .channel(`public-checkins-${token}`)
-      .on('broadcast', { event: 'checkin-created' }, () => {
+      .on('broadcast', { event: 'checkin-created' }, ({ payload }) => {
         void loadCheckinCount()
+        const fullName = typeof payload?.full_name === 'string' ? payload.full_name : ''
+        const id = typeof payload?.checkin_id === 'string' ? payload.checkin_id : crypto.randomUUID()
+        enqueueNotification({ id, fullName })
       })
       .subscribe()
 
@@ -68,14 +84,22 @@ export function QrDisplayPage() {
       void supabase.removeChannel(tableChannel)
       void supabase.removeChannel(broadcastChannel)
     }
-  }, [loadCheckinCount, session?.id, token])
+  }, [enqueueNotification, loadCheckinCount, session?.id, token])
+
+  useEffect(() => {
+    if (notificationQueue.length === 0) return
+    const timer = window.setTimeout(() => {
+      setNotificationQueue((current) => current.slice(1))
+    }, 4200)
+    return () => window.clearTimeout(timer)
+  }, [notificationQueue])
 
   useEffect(() => {
     void loadCheckinCount()
   }, [loadCheckinCount])
 
   const url = token ? publicCheckinUrl(token) : ''
-  const hero = session?.courses?.banner_url || settings.default_banner_url || defaultHeroUrl
+  const hero = session?.banner_url || session?.courses?.banner_url || settings.default_banner_url || defaultHeroUrl
   const brandLogo = settings.logo_url || brandLogoUrl
   const formattedTime = updatedAt
     ? updatedAt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
@@ -87,6 +111,23 @@ export function QrDisplayPage() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_18%,rgb(var(--brand-accent-rgb)/0.18),transparent_28rem),linear-gradient(112deg,rgba(0,0,0,0.82)_0%,rgba(0,0,0,0.56)_45%,rgba(0,0,0,0.5)_100%)]" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/72 via-transparent to-black/28" />
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--brand-accent)] to-transparent opacity-80" />
+
+      {notificationQueue[0] && (
+        <div className="pointer-events-none absolute inset-x-4 top-20 z-50 flex justify-center" aria-live="polite" aria-atomic="true">
+          <div key={notificationQueue[0].id} className="tv-checkin-toast flex max-w-xl items-center gap-4 rounded-lg border border-[rgb(var(--brand-accent-rgb)/0.5)] bg-[#0b0b08]/94 px-5 py-4 shadow-[0_24px_90px_rgba(0,0,0,0.72)] backdrop-blur-xl">
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-[var(--brand-accent)] text-black shadow-[0_0_36px_rgb(var(--brand-accent-rgb)/0.3)]">
+              <CheckCircle2 size={27} strokeWidth={2.5} />
+            </span>
+            <div className="min-w-0">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-accent)]">Presenca confirmada</p>
+              <p className="mt-1 text-lg font-black text-white sm:text-2xl">{notificationQueue[0].fullName} fez check-in</p>
+            </div>
+            {notificationQueue.length > 1 && (
+              <span className="chip shrink-0">+{notificationQueue.length - 1} na fila</span>
+            )}
+          </div>
+        </div>
+      )}
 
       <section className="relative mx-auto grid h-full w-full max-w-7xl grid-rows-[auto_1fr_auto] gap-3 sm:gap-4">
         <header className="flex items-center justify-between gap-4">
@@ -112,7 +153,7 @@ export function QrDisplayPage() {
             </h1>
             <div className="mt-5 grid max-w-3xl gap-2 sm:grid-cols-3 lg:mt-6">
               <InfoPill icon={CalendarDays} label="Data" value={formatDate(session?.session_date)} />
-              <InfoPill icon={Clock3} label="Horario" value={session?.starts_at ?? 'Livre'} />
+              <InfoPill icon={Clock3} label="Horario" value={session?.starts_at?.slice(0, 5) ?? 'Livre'} />
               <InfoPill icon={MapPin} label="Local" value={session?.location || session?.courses?.location || 'Lagoinha Americana'} />
             </div>
           </div>

@@ -46,6 +46,7 @@ create table if not exists public.class_sessions (
   session_date date,
   starts_at time,
   location text,
+  banner_url text,
   status text not null default 'scheduled' check (status in ('scheduled', 'open', 'closed', 'archived')),
   qr_token uuid not null default gen_random_uuid() unique,
   created_by uuid references public.profiles(id) on delete set null,
@@ -70,6 +71,9 @@ create table if not exists public.checkins (
   class_id uuid not null references public.class_sessions(id) on delete cascade,
   student_id uuid not null references public.students(id) on delete cascade,
   note text,
+  receipt_requested boolean not null default false,
+  receipt_sent_at timestamptz,
+  receipt_error text,
   checked_in_at timestamptz not null default now(),
   created_at timestamptz not null default now(),
   unique (class_id, student_id)

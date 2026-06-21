@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { Archive, Copy, Eye, Pencil, Plus, QrCode, Trash2 } from 'lucide-react'
+import { Archive, Copy, Eye, Link as LinkIcon, Loader2, Pencil, Plus, QrCode, Trash2, UploadCloud, X } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { EmptyState } from '../../components/EmptyState'
@@ -8,6 +8,7 @@ import { PageHeader } from '../../components/PageHeader'
 import { supabase } from '../../lib/supabase'
 import type { ClassSession, ClassStatus, Course } from '../../lib/types'
 import { formatDate, publicCheckinUrl, publicQrUrl } from '../../lib/utils'
+import { brandCoverUrl } from '../../lib/assets'
 
 const blankSession = {
   course_id: '',
@@ -16,6 +17,7 @@ const blankSession = {
   session_date: '',
   starts_at: '',
   location: '',
+  banner_url: '',
   status: 'scheduled' as ClassStatus,
 }
 
@@ -170,6 +172,8 @@ function SessionModal({
     [courses, defaultCourseId, session],
   )
   const [form, setForm] = useState(initial)
+  const [uploading, setUploading] = useState(false)
+  const [selectedFile, setSelectedFile] = useState<string | null>(null)
 
   useEffect(() => {
     setForm(initial)
@@ -177,6 +181,29 @@ function SessionModal({
 
   function update(key: keyof typeof blankSession, value: string) {
     setForm((current) => ({ ...current, [key]: value }))
+  }
+
+  async function upload(file: File) {
+    if (!file.type.startsWith('image/')) {
+      toast.error('Escolha uma imagem valida.')
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Use uma imagem de ate 5 MB.')
+      return
+    }
+    setUploading(true)
+    setSelectedFile(file.name)
+    const safeName = file.name.toLowerCase().replace(/[^a-z0-9._-]+/g, '-')
+    const path = `session-banners/${crypto.randomUUID()}-${safeName}`
+    const { error } = await supabase.storage.from('media').upload(path, file, { upsert: false })
+    if (error) toast.error(error.message)
+    else {
+      const { data } = supabase.storage.from('media').getPublicUrl(path)
+      update('banner_url', data.publicUrl)
+      toast.success('Imagem da aula enviada.')
+    }
+    setUploading(false)
   }
 
   async function submit(event: FormEvent) {
@@ -194,6 +221,7 @@ function SessionModal({
       session_date: form.session_date || null,
       starts_at: startsAt,
       location: form.location || null,
+      banner_url: form.banner_url || null,
       status: form.status,
       qr_token: session?.qr_token ?? crypto.randomUUID(),
     }
@@ -210,6 +238,18 @@ function SessionModal({
   return (
     <Modal title={session ? 'Editar aula' : 'Nova aula'} onClose={onClose}>
       <form className="grid gap-4" onSubmit={submit}>
+        <div className="relative overflow-hidden rounded-lg border border-[rgb(var(--brand-accent-rgb)/0.2)] bg-[#050505]">
+          <img
+            className="h-44 w-full object-cover opacity-90 sm:h-52"
+            src={form.banner_url || courses.find((course) => course.id === form.course_id)?.banner_url || brandCoverUrl}
+            alt="Previa da imagem da aula"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/24 to-transparent" />
+          <div className="absolute bottom-4 left-4 right-4">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-[var(--brand-accent)]">Previa do modo TV</p>
+            <h3 className="mt-1 line-clamp-1 text-2xl font-black text-white">{form.name || 'Nome da aula'}</h3>
+          </div>
+        </div>
         <label className="label">
           Curso/evento
           <select className="field" value={form.course_id} onChange={(event) => update('course_id', event.target.value)} required>
@@ -229,6 +269,48 @@ function SessionModal({
             Descricao
             <textarea className="field min-h-24" value={form.description ?? ''} onChange={(event) => update('description', event.target.value)} />
           </label>
+          <div className="grid gap-3 md:col-span-2">
+            <label className="label">
+              Imagem da aula
+              <span
+                className="relative flex min-h-36 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-[rgb(var(--brand-accent-rgb)/0.34)] bg-[rgb(var(--brand-accent-rgb)/0.07)] p-5 text-center transition hover:border-[rgb(var(--brand-accent-rgb)/0.7)] hover:bg-[rgb(var(--brand-accent-rgb)/0.11)]"
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={(event) => {
+                  event.preventDefault()
+                  const file = event.dataTransfer.files[0]
+                  if (file) void upload(file)
+                }}
+              >
+                <input
+                  className="absolute inset-0 cursor-pointer opacity-0"
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  disabled={uploading}
+                  onChange={(event) => event.target.files?.[0] && void upload(event.target.files[0])}
+                />
+                <span className="grid h-12 w-12 place-items-center rounded-lg bg-[rgb(var(--brand-accent-rgb)/0.16)] text-[var(--brand-accent)]">
+                  {uploading ? <Loader2 className="animate-spin" size={24} /> : <UploadCloud size={24} />}
+                </span>
+                <span className="mt-3 text-sm font-black text-[#fff8df]">
+                  {uploading ? 'Enviando para o Supabase Storage...' : 'Arraste ou clique para enviar a imagem da aula'}
+                </span>
+                <span className="mt-1 text-xs font-semibold text-[#bfb490]">PNG, JPG ou WEBP ate 5 MB. Recomendado: 1600x900.</span>
+                {selectedFile && <span className="mt-3 chip">{selectedFile}</span>}
+              </span>
+            </label>
+            <div className="grid gap-2 md:grid-cols-[1fr_auto]">
+              <label className="label">
+                URL da imagem
+                <span className="relative">
+                  <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-[#bfb490]" size={16} />
+                  <input className="field pl-10" value={form.banner_url ?? ''} onChange={(event) => update('banner_url', event.target.value)} />
+                </span>
+              </label>
+              <button className="btn btn-soft self-end" onClick={() => update('banner_url', '')} type="button">
+                <X size={16} /> Usar imagem do curso
+              </button>
+            </div>
+          </div>
           <label className="label">
             Data
             <input className="field" type="date" value={form.session_date ?? ''} onChange={(event) => update('session_date', event.target.value)} />
