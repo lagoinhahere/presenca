@@ -123,7 +123,6 @@ export function AttendancePage() {
     ])
     const doc = await createCertificatePdf({
       churchName: settings.church_name,
-      platformName: settings.platform_name,
       footerText: settings.footer_text,
       studentName: item.student.full_name,
       courseName: selectedCourse.name,

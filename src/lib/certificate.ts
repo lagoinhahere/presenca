@@ -2,7 +2,6 @@ import { normalizeName } from './utils'
 
 export type CertificateOptions = {
   churchName: string
-  platformName: string
   footerText: string
   studentName: string
   courseName: string
@@ -93,12 +92,10 @@ export async function createCertificatePdf(options: CertificateOptions) {
   doc.text(attendanceText, center, badgeY + 19, { align: 'center' })
 
   const signatureLineY = 459
-  const leftCenter = center - 142
-  const rightCenter = center + 142
 
   if (options.signatureDataUrl) {
     try {
-      addContainedImage(doc, options.signatureDataUrl, leftCenter - 82, 372, 164, 68)
+      addContainedImage(doc, options.signatureDataUrl, center - 92, 372, 184, 68)
     } catch {
       // The certificate remains valid if a remote signature cannot be loaded.
     }
@@ -106,20 +103,17 @@ export async function createCertificatePdf(options: CertificateOptions) {
 
   doc.setDrawColor(111, 96, 48)
   doc.setLineWidth(0.7)
-  doc.line(leftCenter - 92, signatureLineY, leftCenter + 92, signatureLineY)
-  doc.line(rightCenter - 92, signatureLineY, rightCenter + 92, signatureLineY)
+  doc.line(center - 112, signatureLineY, center + 112, signatureLineY)
 
   doc.setFont('times', 'bold')
   doc.setFontSize(12)
   doc.setTextColor(...ivory)
-  doc.text(options.instructorName || 'Professor responsavel', leftCenter, 479, { align: 'center', maxWidth: 180 })
-  doc.text(options.platformName, rightCenter, 479, { align: 'center', maxWidth: 180 })
+  doc.text(options.instructorName || 'Professor responsavel', center, 479, { align: 'center', maxWidth: 220 })
 
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(8)
   doc.setTextColor(...muted)
-  doc.text('PROFESSOR / RESPONSAVEL', leftCenter, 497, { align: 'center', charSpace: 0.8 })
-  doc.text(options.churchName.toUpperCase(), rightCenter, 497, { align: 'center', charSpace: 0.8 })
+  doc.text('PROFESSOR / RESPONSAVEL', center, 497, { align: 'center', charSpace: 0.8 })
 
   const issuedAt = options.issuedAt ?? new Date()
   doc.setFontSize(7.5)
