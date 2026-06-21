@@ -31,13 +31,13 @@ Deno.serve(async (request) => {
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-    const resendApiKey = Deno.env.get('RESEND_API_KEY')
+    const brevoApiKey = Deno.env.get('BREVO_API_KEY')
     const fromEmail = Deno.env.get('CHECKIN_FROM_EMAIL')
 
     if (!supabaseUrl || !serviceRoleKey) {
       throw new Error('Configuracao interna do Supabase indisponivel.')
     }
-    if (!resendApiKey || !fromEmail) {
+    if (!brevoApiKey || !fromEmail) {
       return json({ error: 'O envio de e-mail ainda nao foi configurado.' }, 503)
     }
 
@@ -82,23 +82,24 @@ Deno.serve(async (request) => {
       return json({ error: 'O check-in nao possui e-mail.' }, 422)
     }
 
-    const emailResponse = await fetch('https://api.resend.com/emails', {
+    const sender = parseSender(fromEmail)
+    const emailResponse = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${resendApiKey}`,
+        'api-key': brevoApiKey,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: fromEmail,
-        to: [student.email],
+        sender,
+        to: [{ email: student.email, name: student.full_name }],
         subject: `Presenca confirmada | ${session?.name ?? 'Lagoinha Here!'}`,
-        html: receiptHtml({ checkin, student, session, course }),
+        htmlContent: receiptHtml({ checkin, student, session, course }),
       }),
     })
 
     if (!emailResponse.ok) {
       const providerError = await emailResponse.text()
-      console.error('Resend error:', providerError)
+      console.error('Brevo error:', providerError)
       await admin.from('checkins').update({ receipt_error: providerError.slice(0, 500) }).eq('id', checkinId)
       return json({ error: 'O provedor recusou o envio do e-mail.' }, 502)
     }
@@ -133,6 +134,12 @@ function escapeHtml(value: unknown) {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#039;')
+}
+
+function parseSender(value: string) {
+  const match = /^\s*(.*?)\s*<([^<>]+)>\s*$/.exec(value)
+  if (match) return { name: match[1] || 'Lagoinha Here!', email: match[2].trim() }
+  return { name: 'Lagoinha Here!', email: value.trim() }
 }
 
 function receiptHtml({

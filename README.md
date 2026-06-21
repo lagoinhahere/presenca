@@ -120,18 +120,19 @@ https://lagoinhahere.github.io/presenca/
 
 ## Comprovante por e-mail
 
-O comprovante e enviado pela Edge Function `send-checkin-receipt`. O projeto usa o Resend como provedor; a chave fica somente no Supabase e nunca e enviada ao navegador.
+O comprovante e enviado pela Edge Function `send-checkin-receipt`. O projeto usa o Brevo como provedor; a chave fica somente no Supabase e nunca e enviada ao navegador.
 
-1. Crie uma conta no [Resend](https://resend.com/) e uma API Key.
-2. Valide um dominio no Resend para enviar mensagens a qualquer participante.
-3. No terminal, dentro deste projeto, configure os segredos:
+1. Crie uma conta no [Brevo](https://www.brevo.com/).
+2. Em **Remetentes, dominio, IPs**, cadastre e valide o e-mail remetente.
+3. Em **SMTP & API > Chaves API e MCP**, crie uma chave API.
+4. No terminal, dentro deste projeto, configure os segredos:
 
 ```bash
-supabase secrets set RESEND_API_KEY=re_sua_chave
-supabase secrets set "CHECKIN_FROM_EMAIL=Lagoinha Here! <presenca@seu-dominio.com>"
+supabase secrets set BREVO_API_KEY=sua_chave
+supabase secrets set "CHECKIN_FROM_EMAIL=Lagoinha Here! <lagoinhahere@outlook.com>"
 ```
 
-4. Aplique a migracao e publique a funcao:
+5. Aplique a migracao e publique a funcao:
 
 ```bash
 supabase db push
