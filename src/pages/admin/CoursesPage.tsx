@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Archive, CalendarDays, LinkIcon, Loader2, Pencil, Plus, Trash2, UploadCloud, X } from 'lucide-react'
+import { Archive, CalendarDays, FileSignature, LinkIcon, Loader2, Pencil, Plus, Trash2, UploadCloud, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { EmptyState } from '../../components/EmptyState'
@@ -19,6 +19,7 @@ const blankCourse = {
   status: 'active' as CourseStatus,
   location: '',
   banner_url: '',
+  signature_url: '',
   color: '#ffc400',
   notes: '',
 }
@@ -135,14 +136,14 @@ export function CoursesPage() {
 
 function CourseModal({ course, onClose, onSaved }: { course: Course | null; onClose: () => void; onSaved: () => void }) {
   const [form, setForm] = useState({ ...blankCourse, ...(course ?? {}) })
-  const [uploading, setUploading] = useState(false)
-  const [selectedFile, setSelectedFile] = useState<string | null>(null)
+  const [uploading, setUploading] = useState<'banner_url' | 'signature_url' | null>(null)
+  const [selectedFile, setSelectedFile] = useState<Record<string, string>>({})
 
   function update(key: keyof typeof blankCourse, value: string) {
     setForm((current) => ({ ...current, [key]: value }))
   }
 
-  async function upload(file: File) {
+  async function upload(file: File, field: 'banner_url' | 'signature_url') {
     if (!file.type.startsWith('image/')) {
       toast.error('Escolha uma imagem valida.')
       return
@@ -151,18 +152,18 @@ function CourseModal({ course, onClose, onSaved }: { course: Course | null; onCl
       toast.error('Use uma imagem de ate 5 MB.')
       return
     }
-    setUploading(true)
-    setSelectedFile(file.name)
+    setUploading(field)
+    setSelectedFile((current) => ({ ...current, [field]: file.name }))
     const safeName = file.name.toLowerCase().replace(/[^a-z0-9._-]+/g, '-')
-    const path = `banners/${crypto.randomUUID()}-${safeName}`
+    const path = `${field === 'banner_url' ? 'banners' : 'signatures'}/${crypto.randomUUID()}-${safeName}`
     const { error } = await supabase.storage.from('media').upload(path, file, { upsert: false })
     if (error) toast.error(error.message)
     else {
       const { data } = supabase.storage.from('media').getPublicUrl(path)
-      update('banner_url', data.publicUrl)
-      toast.success('Banner enviado.')
+      update(field, data.publicUrl)
+      toast.success(field === 'banner_url' ? 'Banner enviado.' : 'Assinatura enviada.')
     }
-    setUploading(false)
+    setUploading(null)
   }
 
   async function submit(event: FormEvent) {
@@ -175,6 +176,7 @@ function CourseModal({ course, onClose, onSaved }: { course: Course | null; onCl
       status: form.status,
       location: form.location || null,
       banner_url: form.banner_url || null,
+      signature_url: form.signature_url || null,
       color: form.color,
       notes: form.notes || null,
     }
@@ -216,7 +218,7 @@ function CourseModal({ course, onClose, onSaved }: { course: Course | null; onCl
             <textarea className="field min-h-24" value={form.description ?? ''} onChange={(event) => update('description', event.target.value)} />
           </label>
           <label className="label">
-            Responsavel
+            Professor / responsavel
             <input className="field" value={form.owner_name ?? ''} onChange={(event) => update('owner_name', event.target.value)} />
           </label>
           <label className="label">
@@ -247,17 +249,17 @@ function CourseModal({ course, onClose, onSaved }: { course: Course | null; onCl
                   className="absolute inset-0 cursor-pointer opacity-0"
                   type="file"
                   accept="image/*"
-                  disabled={uploading}
-                  onChange={(event) => event.target.files?.[0] && upload(event.target.files[0])}
+                  disabled={Boolean(uploading)}
+                  onChange={(event) => event.target.files?.[0] && upload(event.target.files[0], 'banner_url')}
                 />
                 <span className="grid h-12 w-12 place-items-center rounded-lg bg-[#ffc400]/18 text-[#ffc400]">
-                  {uploading ? <Loader2 className="animate-spin" size={24} /> : <UploadCloud size={24} />}
+                  {uploading === 'banner_url' ? <Loader2 className="animate-spin" size={24} /> : <UploadCloud size={24} />}
                 </span>
                 <span className="mt-3 text-sm font-black text-[#fff8df]">
-                  {uploading ? 'Enviando para o Supabase Storage...' : 'Arraste ou clique para enviar um banner'}
+                  {uploading === 'banner_url' ? 'Enviando para o Supabase Storage...' : 'Arraste ou clique para enviar um banner'}
                 </span>
                 <span className="mt-1 text-xs font-semibold text-[#bfb490]">PNG, JPG ou WEBP ate 5 MB. Recomendado: 1600x900.</span>
-                {selectedFile && <span className="mt-3 chip">{selectedFile}</span>}
+                {selectedFile.banner_url && <span className="mt-3 chip">{selectedFile.banner_url}</span>}
               </span>
             </label>
             <div className="grid gap-2 md:grid-cols-[1fr_auto]">
@@ -270,6 +272,41 @@ function CourseModal({ course, onClose, onSaved }: { course: Course | null; onCl
               </label>
               <button className="btn btn-soft self-end" onClick={() => update('banner_url', '')} type="button">
                 <X size={16} /> Limpar
+              </button>
+            </div>
+          </div>
+          <div className="grid gap-3 md:col-span-2">
+            <label className="label">
+              Assinatura do professor
+              <span className="relative grid min-h-36 cursor-pointer place-items-center overflow-hidden rounded-lg border border-dashed border-[rgb(var(--brand-accent-rgb)/0.3)] bg-[#f5f0df] p-5 text-center transition hover:border-[var(--brand-accent)]">
+                <input
+                  className="absolute inset-0 z-10 cursor-pointer opacity-0"
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  disabled={Boolean(uploading)}
+                  onChange={(event) => event.target.files?.[0] && upload(event.target.files[0], 'signature_url')}
+                />
+                {form.signature_url ? (
+                  <img className="max-h-24 max-w-[75%] object-contain" src={form.signature_url} alt="Previa da assinatura" />
+                ) : (
+                  <span className="flex flex-col items-center text-[#2c281e]">
+                    {uploading === 'signature_url' ? <Loader2 className="animate-spin" size={28} /> : <FileSignature size={30} />}
+                    <span className="mt-2 text-sm font-black">Clique para enviar a assinatura</span>
+                    <span className="mt-1 text-xs font-semibold text-[#6d644f]">Prefira PNG com fundo transparente, ate 5 MB.</span>
+                  </span>
+                )}
+              </span>
+            </label>
+            <div className="grid gap-2 md:grid-cols-[1fr_auto]">
+              <label className="label">
+                URL da assinatura
+                <span className="relative">
+                  <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-[#bfb490]" size={16} />
+                  <input className="field pl-10" value={form.signature_url ?? ''} onChange={(event) => update('signature_url', event.target.value)} />
+                </span>
+              </label>
+              <button className="btn btn-soft self-end" onClick={() => update('signature_url', '')} type="button">
+                <X size={16} /> Remover
               </button>
             </div>
           </div>

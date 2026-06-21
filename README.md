@@ -117,6 +117,11 @@ https://lagoinhahere.github.io/presenca/
 - Imagem individual por aula, com fallback para o banner do curso
 - Fila de confirmacoes ao vivo no modo TV
 - Comprovante de participacao opcional por e-mail
+- Certificados premium com marca d'agua, frequencia e assinatura do professor
+
+### Assinatura dos certificados
+
+Em **Cursos > Editar**, preencha o campo **Professor / responsavel** e envie a assinatura correspondente. Para o melhor resultado no PDF, use PNG com fundo transparente e boa resolucao. A assinatura e armazenada no bucket `media` e aplicada somente aos certificados daquele curso.
 
 ## Comprovante por e-mail
 

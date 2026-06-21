@@ -6,6 +6,8 @@ import { useSettings } from '../../contexts/SettingsContext'
 import { supabase } from '../../lib/supabase'
 import type { Checkin, ClassSession, Course, Student } from '../../lib/types'
 import { normalizeName } from '../../lib/utils'
+import { assetUrl, resolveAssetUrl } from '../../lib/assets'
+import { certificateFileName, createCertificatePdf, imageUrlToDataUrl } from '../../lib/certificate'
 
 const CERTIFICATE_THRESHOLD = 75
 
@@ -115,16 +117,24 @@ export function AttendancePage() {
       return
     }
 
-    await generateCertificate({
+    const [watermarkDataUrl, signatureDataUrl] = await Promise.all([
+      imageUrlToDataUrl(assetUrl('certificate-watermark.png')).catch(() => null),
+      imageUrlToDataUrl(resolveAssetUrl(selectedCourse.signature_url)).catch(() => null),
+    ])
+    const doc = await createCertificatePdf({
       churchName: settings.church_name,
       platformName: settings.platform_name,
       footerText: settings.footer_text,
       studentName: item.student.full_name,
       courseName: selectedCourse.name,
+      instructorName: selectedCourse.owner_name,
       attendanceCount: item.attendanceCount,
       totalSessions: sessions.length,
       percentage: item.percentage,
+      watermarkDataUrl,
+      signatureDataUrl,
     })
+    doc.save(certificateFileName(item.student.full_name))
   }
 
   async function handleExportXlsx() {
@@ -306,92 +316,6 @@ function Th({ children }: { children: React.ReactNode }) {
 
 function Td({ children, strong }: { children: React.ReactNode; strong?: boolean }) {
   return <td className={`px-4 py-3 align-top ${strong ? 'font-black text-[#fff8df]' : 'font-semibold text-[#d9cfaa]'}`}>{children}</td>
-}
-
-async function generateCertificate({
-  churchName,
-  platformName,
-  footerText,
-  studentName,
-  courseName,
-  attendanceCount,
-  totalSessions,
-  percentage,
-}: {
-  churchName: string
-  platformName: string
-  footerText: string
-  studentName: string
-  courseName: string
-  attendanceCount: number
-  totalSessions: number
-  percentage: number
-}) {
-  const { jsPDF } = await import('jspdf')
-  const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' })
-  const width = doc.internal.pageSize.getWidth()
-  const height = doc.internal.pageSize.getHeight()
-
-  doc.setFillColor(5, 5, 5)
-  doc.rect(0, 0, width, height, 'F')
-  doc.setDrawColor(210, 180, 90)
-  doc.setLineWidth(2)
-  doc.rect(34, 34, width - 68, height - 68)
-  doc.setDrawColor(90, 76, 38)
-  doc.rect(48, 48, width - 96, height - 96)
-
-  doc.setTextColor(214, 180, 90)
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(13)
-  doc.text(churchName.toUpperCase(), width / 2, 92, { align: 'center' })
-
-  doc.setTextColor(255, 248, 223)
-  doc.setFontSize(38)
-  doc.text('Certificado de conclusao', width / 2, 150, { align: 'center' })
-
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(15)
-  doc.setTextColor(210, 204, 180)
-  doc.text('Certificamos que', width / 2, 205, { align: 'center' })
-
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(34)
-  doc.setTextColor(255, 255, 255)
-  doc.text(studentName, width / 2, 255, { align: 'center' })
-
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(15)
-  doc.setTextColor(210, 204, 180)
-  doc.text('participou do curso', width / 2, 302, { align: 'center' })
-
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(24)
-  doc.setTextColor(255, 248, 223)
-  doc.text(courseName, width / 2, 342, { align: 'center', maxWidth: width - 150 })
-
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(13)
-  doc.setTextColor(210, 204, 180)
-  doc.text(
-    `com ${percentage}% de frequencia (${Math.min(attendanceCount, totalSessions)} de ${totalSessions} encontros).`,
-    width / 2,
-    400,
-    { align: 'center' },
-  )
-
-  doc.setDrawColor(210, 180, 90)
-  doc.line(width / 2 - 120, 460, width / 2 + 120, 460)
-  doc.setTextColor(255, 248, 223)
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(12)
-  doc.text(platformName, width / 2, 486, { align: 'center' })
-
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(9)
-  doc.setTextColor(150, 140, 110)
-  doc.text(`${footerText} | Emitido em ${new Date().toLocaleDateString('pt-BR')}`, width / 2, height - 62, { align: 'center' })
-
-  doc.save(`certificado-${normalizeName(studentName).replace(/\s+/g, '-')}.pdf`)
 }
 
 async function exportAttendanceXlsx({

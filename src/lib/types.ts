@@ -32,6 +32,7 @@ export type Course = {
   status: CourseStatus
   location: string | null
   banner_url: string | null
+  signature_url: string | null
   color: string
   notes: string | null
   created_at?: string

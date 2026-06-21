@@ -31,6 +31,7 @@ create table if not exists public.courses (
   status text not null default 'active' check (status in ('active', 'draft', 'archived')),
   location text,
   banner_url text,
+  signature_url text,
   color text not null default '#ffc400',
   notes text,
   created_by uuid references public.profiles(id) on delete set null,
