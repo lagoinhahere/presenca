@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
-import { CalendarCheck, Clock3, MapPin, Sparkles, UsersRound } from 'lucide-react'
+import { CalendarCheck, Clock3, MapPin, Sparkles } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { PageHeader } from '../../components/PageHeader'
 import { supabase } from '../../lib/supabase'
-import type { Checkin, ClassSession, Course } from '../../lib/types'
-import { formatDate, formatDateTime } from '../../lib/utils'
+import type { ClassSession, Course } from '../../lib/types'
+import { formatDate } from '../../lib/utils'
 import { useSettings } from '../../contexts/SettingsContext'
 import { defaultHeroUrl } from '../../lib/assets'
 
@@ -12,21 +12,14 @@ export function DashboardPage() {
   const { settings } = useSettings()
   const [courses, setCourses] = useState<Course[]>([])
   const [sessions, setSessions] = useState<ClassSession[]>([])
-  const [checkins, setCheckins] = useState<Checkin[]>([])
 
   useEffect(() => {
     Promise.all([
       supabase.from('courses').select('*').neq('status', 'archived').order('event_date', { ascending: true }),
       supabase.from('class_sessions').select('*, courses(id,name,color,banner_url,location)').neq('status', 'archived').order('session_date', { ascending: true }),
-      supabase
-        .from('checkins')
-        .select('*, students(*), class_sessions(*, courses(*))')
-        .order('checked_in_at', { ascending: false })
-        .limit(8),
-    ]).then(([courseResult, sessionResult, checkinResult]) => {
+    ]).then(([courseResult, sessionResult]) => {
       setCourses(courseResult.data ?? [])
       setSessions(sessionResult.data ?? [])
-      setCheckins(checkinResult.data ?? [])
     })
   }, [])
 
@@ -47,22 +40,20 @@ export function DashboardPage() {
           <h2 className="mt-3 text-3xl font-black leading-tight md:text-5xl">{settings.platform_name}</h2>
           <p className="mt-3 text-sm font-medium leading-relaxed text-white/82 sm:text-base">{settings.welcome_text}</p>
           </div>
-          <div className="grid w-full gap-3 sm:grid-cols-3 lg:w-[360px]">
+          <div className="grid w-full gap-3 sm:grid-cols-2 lg:w-[250px]">
             <HeroStat value={activeCourses} label="ativos" />
             <HeroStat value={sessions.length} label="aulas" />
-            <HeroStat value={checkins.length} label="presencas" />
           </div>
         </div>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-4 md:grid-cols-3">
         <Metric icon={CalendarCheck} label="Cursos ativos" value={activeCourses} detail="programacao em andamento" to="/courses" />
         <Metric icon={Clock3} label="Aulas criadas" value={sessions.length} detail="encontros cadastrados" />
-        <Metric icon={UsersRound} label="Check-ins totais" value={checkins.length} detail="ultimos registros carregados" />
         <Metric icon={MapPin} label="Aulas abertas" value={openSessions} detail="prontas para presenca" />
       </section>
 
-      <section className="mt-6 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+      <section className="mt-6">
         <div className="card p-5">
           <SectionTitle title="Cursos e eventos em destaque" />
           <div className="grid gap-3">
@@ -83,20 +74,6 @@ export function DashboardPage() {
                 </div>
                 <span className="chip">{course.status}</span>
               </Link>
-            ))}
-          </div>
-        </div>
-
-        <div className="card p-5">
-          <SectionTitle title="Presencas recentes" />
-          <div className="grid gap-3">
-            {checkins.length === 0 && <SoftEmpty text="As presencas recentes aparecerao aqui." />}
-            {checkins.map((checkin) => (
-              <div key={checkin.id} className="rounded-lg border border-[#ffc400]/12 bg-white/5 p-3">
-                <p className="font-black">{checkin.students?.full_name}</p>
-                <p className="text-sm font-medium text-[#bfb490]">{checkin.class_sessions?.name}</p>
-                <p className="mt-1 text-xs font-bold uppercase tracking-[0.12em] text-[#8b7b6a]">{formatDateTime(checkin.checked_in_at)}</p>
-              </div>
             ))}
           </div>
         </div>
